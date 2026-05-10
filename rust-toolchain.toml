@@ -2,7 +2,7 @@
 # en CONTRIBUTING.md para preparar la toolbox Fedora.
 
 [toolchain]
-channel    = "1.82"
+channel    = "1.88"
 profile    = "minimal"
 components = ["rustfmt", "clippy", "rust-src"]
 targets    = []

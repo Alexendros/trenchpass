@@ -113,7 +113,8 @@ impl Config {
                 .unwrap_or_else(|_| "0.0.0.0:8300".into())
                 .parse()
                 .map_err(|e| Error::Config(format!("TRENCHPASS_BIND: {e}")))?,
-            log_level: parse_env::<String>("TRENCHPASS_LOG_LEVEL").unwrap_or_else(|_| "info".into()),
+            log_level: parse_env::<String>("TRENCHPASS_LOG_LEVEL")
+                .unwrap_or_else(|_| "info".into()),
         };
 
         let tls = TlsConfig {

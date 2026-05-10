@@ -11,4 +11,4 @@ enum-variant-size-threshold = 256
 disallowed-methods = []
 
 # MSRV declarado.
-msrv = "1.82"
+msrv = "1.88"
