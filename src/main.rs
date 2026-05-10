@@ -36,6 +36,11 @@ async fn main() -> Result<()> {
         let state = AppState::build(config).await.context("AppState build")?;
         let bind: SocketAddr = state.config.server.bind;
         let app = transport::router(state.clone());
+
+        // PR4: sync worker drift Proton Pass ↔ Vault. Si manifest_path o
+        // drift_interval no están configurados, el worker queda desactivado.
+        spawn_sync_worker_if_configured(&state);
+
         match state.config.tls.mode {
             TlsMode::Off => serve_plain(bind, app).await,
             TlsMode::Static | TlsMode::VaultPki => serve_tls(bind, app, &state).await,
@@ -54,6 +59,41 @@ impl Drop for OtelShutdownGuard {
     fn drop(&mut self) {
         otel::shutdown();
     }
+}
+
+fn spawn_sync_worker_if_configured(state: &std::sync::Arc<AppState>) {
+    let Some(manifest_path) = state.config.proton_pass.manifest_path.as_ref() else {
+        info!(target: "sync.worker", "PROTON_PASS_MANIFEST_PATH no configurado · worker desactivado");
+        return;
+    };
+    let manifest = match trenchpass::sync::Manifest::load_from_file(manifest_path) {
+        Ok(m) => m,
+        Err(e) => {
+            tracing::error!(
+                target: "sync.worker",
+                path = %manifest_path.display(),
+                error = %e,
+                "no se pudo cargar manifest · worker desactivado"
+            );
+            return;
+        }
+    };
+    info!(
+        target: "sync.worker",
+        manifest = %manifest_path.display(),
+        vault_id = %manifest.vault_id,
+        secrets_count = manifest.secrets.len(),
+        "manifest cargado"
+    );
+    let source: std::sync::Arc<dyn trenchpass::sync::SecretSource> =
+        std::sync::Arc::new(trenchpass::sync::ManifestSource::new(manifest));
+    let _ = trenchpass::sync::spawn_drift_worker(
+        state.config.proton_pass.drift_interval,
+        source,
+        state.vault.clone(),
+        state.audit.clone(),
+        state.config.vault.kv_mount.clone(),
+    );
 }
 
 async fn serve_plain(bind: SocketAddr, app: axum::Router) -> Result<()> {

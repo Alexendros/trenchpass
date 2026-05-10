@@ -105,6 +105,10 @@ pub struct ProtonPassConfig {
     pub cli_bin: PathBuf,
     pub vault_id: String,
     pub drift_interval: Duration,
+    /// Path absoluto al manifest YAML canónico custodiado en Proton Pass.
+    /// Si `None`, el sync worker queda desactivado (tampoco arranca si
+    /// `drift_interval = 0`). En PR4.1 se reemplaza por invocación CLI directa.
+    pub manifest_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -211,6 +215,7 @@ impl Config {
             drift_interval: Duration::from_secs(
                 parse_env::<u64>("PROTON_PASS_DRIFT_INTERVAL_SECS").unwrap_or(3600),
             ),
+            manifest_path: parse_env::<PathBuf>("PROTON_PASS_MANIFEST_PATH").ok(),
         };
 
         let fax = FaxConfig {

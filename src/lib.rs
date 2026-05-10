@@ -8,6 +8,7 @@ pub mod config;
 pub mod error;
 pub mod otel;
 pub mod security;
+pub mod sync;
 pub mod tools;
 pub mod transport;
 pub mod vault;
