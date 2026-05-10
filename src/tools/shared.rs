@@ -12,7 +12,7 @@ use crate::error::{Error, Result};
 /// `Bearer(token)` → header `Authorization: Bearer <token>`.
 /// `Header { name, value }` → header arbitrario (caso n8n `X-N8N-API-KEY`,
 /// docuseal `X-Auth-Token`).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AuthScheme {
     Bearer(String),
     Header { name: &'static str, value: String },
@@ -74,6 +74,9 @@ pub async fn auth_get_json(
 
 /// Wrapper retro-compat para call sites que sólo usan Bearer.
 /// Permite no tocar los handlers ya migrados.
+/// `name = "bearer_get_json"` mantiene el nombre original del span para no
+/// romper filters/dashboards existentes que filtraban por ese nombre.
+#[instrument(name = "bearer_get_json", skip(http, token), fields(tool_ns = ns))]
 pub async fn bearer_get_json(
     http: &Client,
     ns: &'static str,

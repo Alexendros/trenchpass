@@ -43,12 +43,7 @@ impl ToolHandler for ListProjects {
             .ok_or_else(|| {
                 Error::Upstream("glitchtip.list_projects requiere `org_slug` (string)".into())
             })?;
-        if org.is_empty()
-            || !org
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
-            || org.len() > 100
-        {
+        if !is_valid_org_slug(org) {
             return Err(Error::Upstream("glitchtip: org_slug inválido".into()));
         }
         let token = load_secret_field(ctx, VAULT_PATH, TOKEN_FIELD).await?;
@@ -58,6 +53,15 @@ impl ToolHandler for ListProjects {
         );
         bearer_get_json(&self.http, NS, &url, &token, &[]).await
     }
+}
+
+/// Predicate compartido entre handler y tests · evita drift de validación.
+/// Acepta `[A-Za-z0-9_-]{1,100}` no vacío.
+fn is_valid_org_slug(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= 100
+        && s.chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
 
 #[cfg(test)]
@@ -72,25 +76,20 @@ mod tests {
         assert!(reg.get("glitchtip.list_projects").is_some());
     }
 
-    /// Reproduce el bug pre-PR3.4: empty string vacuamente válido.
-    /// Validamos a nivel de invariantes de la guard sin invocar HTTP.
     #[test]
-    fn org_slug_empty_es_invalido() {
-        let s = "";
-        let valid = !s.is_empty()
-            && s.chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
-            && s.len() <= 100;
-        assert!(!valid, "empty string debe ser inválido");
+    fn is_valid_org_slug_acepta_alfanumerico_guion_underscore() {
+        assert!(is_valid_org_slug("acme"));
+        assert!(is_valid_org_slug("acme-corp"));
+        assert!(is_valid_org_slug("acme_corp_2"));
+        assert!(is_valid_org_slug(&"x".repeat(100)));
     }
 
     #[test]
-    fn org_slug_demasiado_largo_es_invalido() {
-        let s: String = "a".repeat(101);
-        let valid = !s.is_empty()
-            && s.chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
-            && s.len() <= 100;
-        assert!(!valid, "len=101 debe ser inválido (cap 100)");
+    fn is_valid_org_slug_rechaza_empty_y_largo_y_caracteres_invalidos() {
+        assert!(!is_valid_org_slug(""));
+        assert!(!is_valid_org_slug(&"a".repeat(101)));
+        assert!(!is_valid_org_slug("acme/evil"));
+        assert!(!is_valid_org_slug("acme.evil"));
+        assert!(!is_valid_org_slug("acme evil"));
     }
 }
