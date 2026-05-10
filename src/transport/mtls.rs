@@ -198,9 +198,14 @@ fn parse_private_key(pem: &[u8]) -> Result<rustls_pki_types::PrivateKeyDer<'stat
         .ok_or_else(|| anyhow!("PEM no contiene private key"))
 }
 
+/// Backoff entre reintentos cuando Vault PKI no responde.
+const REFRESH_RETRY_BACKOFF: Duration = Duration::from_secs(30);
+
 /// Spawn de tarea de refresh para modo VaultPki.
 /// Re-emite cuando se consume `refresh_percent%` del TTL, con jitter ±N%.
-/// Política de fallo: log error, reintenta cada 30 s (sin tirar el server).
+/// Política de fallo: tras un `Err`, la siguiente iteración duerme sólo
+/// `REFRESH_RETRY_BACKOFF` (no el ttl×refresh_pct/100 normal) — así no
+/// caemos en `30 s + 3.5 d` durante una caída prolongada de Vault.
 pub fn spawn_refresh_loop(
     config: RustlsConfig,
     vault: VaultClient,
@@ -210,16 +215,22 @@ pub fn spawn_refresh_loop(
 ) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
         let mut current = initial;
+        let mut last_failed = false;
         loop {
-            let sleep_for = compute_refresh_delay(
-                current.ttl,
-                cfg.pki_refresh_percent,
-                cfg.pki_refresh_jitter_percent,
-            );
+            let sleep_for = if last_failed {
+                REFRESH_RETRY_BACKOFF
+            } else {
+                compute_refresh_delay(
+                    current.ttl,
+                    cfg.pki_refresh_percent,
+                    cfg.pki_refresh_jitter_percent,
+                )
+            };
             info!(
                 target: "trenchpass.tls.refresh",
                 serial = %current.serial_number,
                 sleep_secs = sleep_for.as_secs(),
+                retry = last_failed,
                 "scheduling next cert refresh"
             );
             tokio::time::sleep(sleep_for).await;
@@ -234,26 +245,39 @@ pub fn spawn_refresh_loop(
                         "cert reloaded"
                     );
                     current = new_bundle;
+                    last_failed = false;
                 }
                 Err(e) => {
                     error!(
                         target: "trenchpass.tls.refresh",
                         error = %e,
-                        "refresh falló · reintentando en 30 s"
+                        backoff_secs = REFRESH_RETRY_BACKOFF.as_secs(),
+                        "refresh falló · reintentando con backoff corto"
                     );
-                    tokio::time::sleep(Duration::from_secs(30)).await;
+                    last_failed = true;
                 }
             }
         }
     })
 }
 
+/// Reemite leaf+ca_chain y reconstruye `ServerConfig` completo.
+///
+/// Decisión: SIEMPRE reconstruimos (no usamos `reload_from_pem`) en modo
+/// `vault_pki` porque Vault puede rotar la CA intermedia entre refreshes;
+/// si reusáramos el verifier viejo, los certs cliente firmados por el nuevo
+/// emisor serían rechazados pese a ser válidos. La reemisión del verifier
+/// es barata y consistente.
 async fn issue_and_reload(
     config: &RustlsConfig,
     vault: &VaultClient,
     pki_mount: &str,
     cfg: &TlsConfig,
 ) -> Result<CertBundle> {
+    // Defensive: garantiza que `ServerConfig::builder()` tenga provider aunque
+    // este path se invoque antes de `build()` (e.g. tests, refactor futuro).
+    crate::init_crypto();
+
     let bundle = vault
         .issue_cert(
             pki_mount,
@@ -265,31 +289,20 @@ async fn issue_and_reload(
         .await
         .context("Vault PKI issue_cert (refresh)")?;
 
-    let fullchain = bundle.fullchain_pem();
+    let ca_chain_pem = vault
+        .pki_ca_chain(pki_mount)
+        .await
+        .context("Vault PKI ca_chain (refresh)")?
+        .join("\n");
 
-    if cfg.mtls_required || cfg.client_ca.is_some() {
-        // Reconstruir ServerConfig completo (verifier puede haber cambiado de root).
-        let ca_chain_pem = vault
-            .pki_ca_chain(pki_mount)
-            .await
-            .context("Vault PKI ca_chain (refresh)")?
-            .join("\n");
-        let server_config = build_server_config(
-            fullchain.as_bytes(),
-            bundle.private_key.as_bytes(),
-            Some(ca_chain_pem.as_bytes()),
-            cfg.mtls_required,
-        )?;
-        config.reload_from_config(Arc::new(server_config));
-    } else {
-        config
-            .reload_from_pem(
-                fullchain.into_bytes(),
-                bundle.private_key.clone().into_bytes(),
-            )
-            .await
-            .context("RustlsConfig::reload_from_pem")?;
-    }
+    let fullchain = bundle.fullchain_pem();
+    let server_config = build_server_config(
+        fullchain.as_bytes(),
+        bundle.private_key.as_bytes(),
+        Some(ca_chain_pem.as_bytes()),
+        cfg.mtls_required,
+    )?;
+    config.reload_from_config(Arc::new(server_config));
 
     Ok(bundle)
 }
