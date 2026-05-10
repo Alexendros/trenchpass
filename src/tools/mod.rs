@@ -88,14 +88,30 @@ pub struct ToolRegistry {
 impl ToolRegistry {
     /// Construye el registry con upstreams en producción.
     pub fn build() -> Arc<Self> {
-        Self::with_notion_base("https://api.notion.com/v1")
+        Self::with_bases(
+            "https://api.notion.com/v1",
+            "https://api.stripe.com/v1",
+            "https://api.github.com",
+        )
     }
 
-    /// Construye el registry permitiendo override del base URL de Notion (tests).
+    /// Variante mantenida para tests existentes (solo notion).
     pub fn with_notion_base(notion_base: &str) -> Arc<Self> {
+        Self::with_bases(
+            notion_base,
+            "https://api.stripe.com/v1",
+            "https://api.github.com",
+        )
+    }
+
+    /// Construye el registry permitiendo override de los 3 base URLs.
+    /// Usado por tests para apuntar a wiremock.
+    pub fn with_bases(notion_base: &str, stripe_base: &str, github_base: &str) -> Arc<Self> {
         let mut b = RegistryBuilder::default();
         notion::register(&mut b, notion_base);
-        // Resto de namespaces se cablean en PR2c (stripe + github) y PR5.
+        stripe::register(&mut b, stripe_base);
+        github::register(&mut b, github_base);
+        // Resto (10 namespaces) se cablean en PR5.
         Arc::new(b.finish())
     }
 
