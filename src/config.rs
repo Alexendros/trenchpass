@@ -42,12 +42,40 @@ pub struct ServerConfig {
     pub log_level: String,
 }
 
+#[derive(Debug, Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum TlsMode {
+    /// Sin TLS · sólo dev tras proxy reverso terminador (Traefik, Caddy).
+    Off,
+    /// PEMs locales fijos · break-glass / dev / smoke.
+    Static,
+    /// Vault PKI emite leaf + ca_chain con TTL ≤ 7 d, refresh automático.
+    VaultPki,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct TlsConfig {
+    pub mode: TlsMode,
+    /// PEMs estáticos (sólo `mode=static`).
     pub cert: Option<PathBuf>,
     pub key: Option<PathBuf>,
+    /// Trust anchors para verificar clientes mTLS (sólo `mode=static`).
+    /// En `mode=vault_pki` se usa el `ca_chain` devuelto por Vault.
     pub client_ca: Option<PathBuf>,
+    /// Si `true`, exige cert cliente válido. Si `false`, mTLS opcional.
     pub mtls_required: bool,
+    /// Vault PKI · rol que firma el leaf cert del gateway.
+    pub pki_role: String,
+    /// CN solicitado al emitir (`alt_names` ext SAN se derivan).
+    pub pki_common_name: String,
+    /// SAN DNS adicionales (CSV).
+    pub pki_alt_names: Vec<String>,
+    /// TTL solicitado al emitir. Vault aplica `min(ttl, role.max_ttl)`.
+    pub pki_cert_ttl: Duration,
+    /// Refrescar al alcanzar este % del TTL emitido (default 50).
+    pub pki_refresh_percent: u8,
+    /// Jitter ± para evitar thundering herd (default 10 %).
+    pub pki_refresh_jitter_percent: u8,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -117,12 +145,42 @@ impl Config {
                 .unwrap_or_else(|_| "info".into()),
         };
 
+        let tls_mode = match parse_env::<String>("TRENCHPASS_TLS_MODE")
+            .unwrap_or_else(|_| "off".into())
+            .as_str()
+        {
+            "vault_pki" | "vault" | "pki" => TlsMode::VaultPki,
+            "static" | "pem" => TlsMode::Static,
+            _ => TlsMode::Off,
+        };
         let tls = TlsConfig {
+            mode: tls_mode,
             cert: parse_env::<PathBuf>("TRENCHPASS_TLS_CERT").ok(),
             key: parse_env::<PathBuf>("TRENCHPASS_TLS_KEY").ok(),
             client_ca: parse_env::<PathBuf>("TRENCHPASS_TLS_CLIENT_CA").ok(),
             mtls_required: parse_bool("TRENCHPASS_MTLS_REQUIRED").unwrap_or(false),
+            pki_role: parse_env::<String>("TRENCHPASS_PKI_ROLE")
+                .unwrap_or_else(|_| "mcp-gateway".into()),
+            pki_common_name: parse_env::<String>("TRENCHPASS_PKI_COMMON_NAME")
+                .unwrap_or_else(|_| "trenchpass.local".into()),
+            pki_alt_names: parse_env::<String>("TRENCHPASS_PKI_ALT_NAMES")
+                .unwrap_or_default()
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect(),
+            pki_cert_ttl: Duration::from_secs(
+                parse_env::<u64>("TRENCHPASS_PKI_CERT_TTL_SECS").unwrap_or(7 * 24 * 60 * 60), // 7 d
+            ),
+            pki_refresh_percent: parse_env::<u8>("TRENCHPASS_PKI_REFRESH_PERCENT").unwrap_or(50),
+            pki_refresh_jitter_percent: parse_env::<u8>("TRENCHPASS_PKI_REFRESH_JITTER_PERCENT")
+                .unwrap_or(10),
         };
+        if tls.mode == TlsMode::VaultPki && tls.pki_refresh_percent < 10 {
+            return Err(Error::Config(
+                "TRENCHPASS_PKI_REFRESH_PERCENT debe ser ≥ 10".into(),
+            ));
+        }
 
         let vault = VaultConfig {
             addr: required("VAULT_ADDR")?,

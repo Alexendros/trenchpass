@@ -48,6 +48,12 @@ impl VaultClient {
         })
     }
 
+    /// Acceso al cliente raw para módulos hermanos (pki, etc.).
+    /// Visibilidad de crate · NO exponer fuera.
+    pub(crate) fn raw_ref(&self) -> &RawVaultClient {
+        self.raw.as_ref()
+    }
+
     /// Resuelve un secreto KV v2 (mount=`kv_mount`, path relativo).
     #[instrument(skip(self), fields(mount = %self.kv_mount))]
     pub async fn secret(&self, path: &str) -> Result<Secret> {
