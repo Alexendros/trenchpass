@@ -1,5 +1,5 @@
 //! Helpers compartidos para handlers de namespace · evitan duplicar el patrón
-//! "extraer token del KV v2, lanzar GET con Bearer, deserializar JSON".
+//! "extraer token del KV v2, lanzar GET con Bearer o custom-header, deserializar JSON".
 
 use reqwest::Client;
 use serde_json::Value;
@@ -7,6 +7,16 @@ use tracing::instrument;
 
 use super::ToolContext;
 use crate::error::{Error, Result};
+
+/// Esquema de autenticación que cada namespace usa contra su upstream.
+/// `Bearer(token)` → header `Authorization: Bearer <token>`.
+/// `Header { name, value }` → header arbitrario (caso n8n `X-N8N-API-KEY`,
+/// docuseal `X-Auth-Token`).
+#[derive(Debug, Clone)]
+pub enum AuthScheme {
+    Bearer(String),
+    Header { name: &'static str, value: String },
+}
 
 /// Extrae un campo string del JSON de un secret KV v2. Soporta tanto el envelope
 /// `{data: {<field>}}` como el cuerpo plano `{<field>}` (operador legacy).
@@ -29,17 +39,21 @@ pub async fn load_secret_field(
     extract_string_field(&secret.data, field, vault_path)
 }
 
-/// `GET <url>` con `Authorization: Bearer <token>`. Devuelve el JSON parseado o
-/// un `Error::Upstream` con el cuerpo de la respuesta si el status no es 2xx.
-#[instrument(skip(http, token), fields(tool_ns = ns))]
-pub async fn bearer_get_json(
+/// `GET <url>` con autenticación según `AuthScheme`. Devuelve JSON parseado o
+/// `Error::Upstream` con cuerpo si status no es 2xx.
+#[instrument(skip(http, auth), fields(tool_ns = ns))]
+pub async fn auth_get_json(
     http: &Client,
     ns: &'static str,
     url: &str,
-    token: &str,
+    auth: &AuthScheme,
     extra_headers: &[(&str, &str)],
 ) -> Result<Value> {
-    let mut req = http.get(url).bearer_auth(token);
+    let mut req = http.get(url);
+    req = match auth {
+        AuthScheme::Bearer(t) => req.bearer_auth(t),
+        AuthScheme::Header { name, value } => req.header(*name, value),
+    };
     for (k, v) in extra_headers {
         req = req.header(*k, *v);
     }
@@ -56,6 +70,25 @@ pub async fn bearer_get_json(
         return Err(Error::Upstream(format!("{ns} {status}: {body}")));
     }
     serde_json::from_str(&body).map_err(|e| Error::Upstream(format!("{ns} parse: {e}")))
+}
+
+/// Wrapper retro-compat para call sites que sólo usan Bearer.
+/// Permite no tocar los handlers ya migrados.
+pub async fn bearer_get_json(
+    http: &Client,
+    ns: &'static str,
+    url: &str,
+    token: &str,
+    extra_headers: &[(&str, &str)],
+) -> Result<Value> {
+    auth_get_json(
+        http,
+        ns,
+        url,
+        &AuthScheme::Bearer(token.to_string()),
+        extra_headers,
+    )
+    .await
 }
 
 /// User-Agent común para todos los reqwest clients del gateway.
@@ -143,5 +176,64 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(body, json!({"ok": true}));
+    }
+
+    #[tokio::test]
+    async fn auth_get_json_envia_header_custom() {
+        use wiremock::matchers::{header, method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/z"))
+            .and(header("X-Custom", "my-key"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"data": "ok"})))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let client = http_client();
+        let url = format!("{}/z", server.uri());
+        let body = auth_get_json(
+            &client,
+            "test_ns",
+            &url,
+            &AuthScheme::Header {
+                name: "X-Custom",
+                value: "my-key".into(),
+            },
+            &[],
+        )
+        .await
+        .unwrap();
+        assert_eq!(body, json!({"data": "ok"}));
+    }
+
+    #[tokio::test]
+    async fn auth_get_json_envia_bearer() {
+        use wiremock::matchers::{header, method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/w"))
+            .and(header("Authorization", "Bearer xyz"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({"result": 1})))
+            .expect(1)
+            .mount(&server)
+            .await;
+
+        let client = http_client();
+        let url = format!("{}/w", server.uri());
+        let body = auth_get_json(
+            &client,
+            "test_ns",
+            &url,
+            &AuthScheme::Bearer("xyz".into()),
+            &[],
+        )
+        .await
+        .unwrap();
+        assert_eq!(body, json!({"result": 1}));
     }
 }

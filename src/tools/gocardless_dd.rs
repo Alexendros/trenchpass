@@ -58,3 +58,23 @@ impl ToolHandler for ListCustomers {
         .await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn register_anade_list_customers() {
+        let mut b = RegistryBuilder::default();
+        register(&mut b, "http://example.invalid");
+        let reg = b.finish();
+        assert!(reg.get("gocardless_dd.list_customers").is_some());
+    }
+
+    #[test]
+    fn gc_version_pinned() {
+        // Header GoCardless-Version pinned para reproducibilidad.
+        // Cambiarlo es breaking en upstream → forzar revisión consciente.
+        assert_eq!(GC_VERSION, "2015-07-06");
+    }
+}
