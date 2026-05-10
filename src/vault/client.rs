@@ -80,4 +80,31 @@ impl VaultClient {
     pub fn invalidate_all(&self) {
         self.cache.clear();
     }
+
+    /// Constructor de tests · no toca Vault. Pre-llena el cache con `(path, value)`
+    /// con TTL infinito efectivo. El raw client apunta a una dirección inexistente
+    /// (nunca se invoca porque el cache hit corta antes).
+    #[cfg(test)]
+    pub fn test_with_secret(path: &str, value: serde_json::Value) -> Self {
+        let settings = VaultClientSettingsBuilder::default()
+            .address("http://127.0.0.1:1")
+            .token("test")
+            .build()
+            .expect("test vault settings");
+        let raw = RawVaultClient::new(settings).expect("test vault client");
+        let cache = DashMap::new();
+        cache.insert(
+            path.to_string(),
+            Secret {
+                data: value,
+                fetched_at: Instant::now(),
+            },
+        );
+        Self {
+            raw: Arc::new(raw),
+            cache: Arc::new(cache),
+            kv_mount: Arc::from("secret"),
+            ttl: Duration::from_secs(3600),
+        }
+    }
 }
