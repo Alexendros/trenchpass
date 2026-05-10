@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+title: "TrenchPass · MCP gateway custodio único de credenciales"
+message: >-
+  Si usas TrenchPass en investigación, infraestructura crítica o publicaciones,
+  cita este software con los metadatos siguientes.
+type: software
+authors:
+  - given-names: Alexendros
+    email: spiderwebtraveler@gmail.com
+    affiliation: Independiente
+repository-code: "https://github.com/Alexendros/trenchpass"
+url: "https://github.com/Alexendros/trenchpass"
+license: AGPL-3.0-or-later
+version: 0.1.0
+date-released: 2026-05-10
+keywords:
+  - mcp
+  - model-context-protocol
+  - secrets-management
+  - vault
+  - rust
+  - rmcp
+  - mtls
+  - observability
+  - signoz
+  - opentelemetry
+abstract: >-
+  TrenchPass es un gateway MCP en Rust que actúa como custodio único de
+  credenciales para una flota de aplicaciones (Controlink y satélites de
+  Alexendros). Centraliza ~20 secretos de proveedor externo detrás de un único
+  endpoint con doble factor (Bearer + mTLS), audit append-only en Postgres,
+  observabilidad SigNoz, sincronización bidireccional con HashiCorp Vault y
+  Proton Pass, comandos de emergencia firmados PGP («vía-fax») y un
+  dead-hand switch («ManitasFritas») con Shamir Secret Sharing 3-de-5.
+preferred-citation:
+  type: software
+  title: "TrenchPass · MCP gateway custodio único de credenciales"
+  authors:
+    - given-names: Alexendros
+  year: 2026
+  url: "https://github.com/Alexendros/trenchpass"

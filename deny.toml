@@ -1,0 +1,53 @@
+# cargo-deny config · https://embarkstudios.github.io/cargo-deny/
+
+[graph]
+all-features = true
+
+[advisories]
+db-path  = "~/.cargo/advisory-db"
+db-urls  = ["https://github.com/rustsec/advisory-db"]
+yanked   = "deny"
+ignore   = []
+
+[licenses]
+allow = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "MIT",
+    "ISC",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "MPL-2.0",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+    "Zlib",
+    "CC0-1.0",
+    "OpenSSL",
+    # Las siguientes solo aplican porque el binario final es AGPL-3.0-or-later.
+    "AGPL-3.0-or-later",
+    "AGPL-3.0",
+]
+confidence-threshold = 0.93
+
+[[licenses.exceptions]]
+allow = ["OpenSSL"]
+crate = "ring"
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+allow = []
+deny = [
+    # Crates que duplican funcionalidad / problemas conocidos.
+    { name = "openssl-sys" },          # forzamos rustls
+    { name = "native-tls" },           # forzamos rustls
+]
+
+skip = []
+skip-tree = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git      = "deny"
+allow-registry   = ["https://github.com/rust-lang/crates.io-index"]
+allow-git        = []

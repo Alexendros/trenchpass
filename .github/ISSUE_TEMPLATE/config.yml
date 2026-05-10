@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Vulnerabilidad de seguridad
+    url: https://github.com/Alexendros/trenchpass/security/advisories/new
+    about: NUNCA reportes vulnerabilidades en issues. Usa el canal privado.
+  - name: Pregunta de uso o arquitectura
+    url: https://github.com/Alexendros/trenchpass/discussions
+    about: Para preguntas, abre Discussion.
+  - name: Documentación
+    url: https://github.com/Alexendros/trenchpass/blob/main/ARCHITECTURE.md
+    about: Antes de preguntar, mira ARCHITECTURE, ROADMAP y docs/adr/.

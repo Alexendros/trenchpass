@@ -1,0 +1,14 @@
+# Clippy configuration · TrenchPass
+# Reglas concretas: ver `[lints.clippy]` en Cargo.toml para deny/warn.
+
+# Subir el threshold por defecto para tipos compuestos en handlers axum.
+type-complexity-threshold = 250
+
+# Enums grandes en `error.rs` son aceptables.
+enum-variant-size-threshold = 256
+
+# `await` solo dentro de bloques asincrónicos.
+disallowed-methods = []
+
+# MSRV declarado.
+msrv = "1.82"

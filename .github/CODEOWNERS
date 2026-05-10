@@ -1,0 +1,26 @@
+# CODEOWNERS · TrenchPass
+# Cada PR notifica automáticamente a los owners listados.
+# Sintaxis: <pattern> <@user…>
+# Más info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-security/managing-repository-settings/about-code-owners
+
+# Por defecto: el lead maintainer.
+*                                   @Alexendros
+
+# Áreas críticas (require review explícito).
+/src/auth/                          @Alexendros
+/src/security/                      @Alexendros
+/src/vault/                         @Alexendros
+/src/audit/                         @Alexendros
+/sql/                               @Alexendros
+
+# Infra y CI.
+/.github/                           @Alexendros
+/Dockerfile                         @Alexendros
+
+# Docs canon (cambios estructurales requieren ADR).
+/ARCHITECTURE.md                    @Alexendros
+/SECURITY.md                        @Alexendros
+/COPYRIGHT.md                       @Alexendros
+/LICENSE                            @Alexendros
+/MAINTAINERS.md                     @Alexendros
+/docs/adr/                          @Alexendros

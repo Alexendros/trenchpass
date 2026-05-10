@@ -1,0 +1,113 @@
+[package]
+name = "trenchpass"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.82"
+description = "TrenchPass · MCP gateway custodio único de credenciales (Vault + Proton Pass)"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/Alexendros/trenchpass"
+publish = false
+
+[[bin]]
+name = "trenchpass"
+path = "src/main.rs"
+
+[dependencies]
+# MCP SDK oficial Anthropic (https://docs.rs/rmcp). Pinned to 1.6 (línea estable actual).
+# Habilitamos server + macros + transport HTTP streamable (sustituto SSE en spec MCP 2025-03+)
+# y schemars para emitir JSON Schema de tools.
+rmcp = { version = "1.6", features = [
+  "server",
+  "macros",
+  "schemars",
+  "transport-streamable-http-server",
+] }
+
+# Web framework + middleware
+axum = { version = "0.7", features = ["macros", "http2"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["cors", "compression-gzip", "trace", "limit"] }
+hyper = { version = "1", features = ["server", "http1", "http2"] }
+hyper-util = { version = "0.1", features = ["server", "tokio"] }
+
+# TLS
+rustls = { version = "0.23", default-features = false, features = ["std", "tls12"] }
+tokio-rustls = "0.26"
+rustls-pemfile = "2"
+x509-parser = "0.16"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Tracing / OpenTelemetry
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"] }
+tracing-opentelemetry = "0.27"
+opentelemetry = "0.26"
+opentelemetry_sdk = { version = "0.26", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.26", features = ["grpc-tonic", "trace", "metrics", "logs"] }
+opentelemetry-semantic-conventions = "0.26"
+
+# Vault
+vaultrs = "0.7"
+
+# Postgres audit log
+sqlx = { version = "0.8", default-features = false, features = [
+  "runtime-tokio-rustls",
+  "postgres",
+  "chrono",
+  "uuid",
+  "json",
+  "macros",
+] }
+
+# HTTP cliente para upstream providers
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+
+# Serialización
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+
+# Utilidades
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2"
+anyhow = "1"
+async-trait = "0.1"
+dashmap = "6"
+once_cell = "1"
+arc-swap = "1"
+governor = "0.7"     # rate limit token bucket
+nonzero_ext = "0.3"
+
+# Config
+dotenvy = "0.15"
+figment = { version = "0.10", features = ["env", "toml"] }
+
+# Crypto / firma (placeholders PR7 vía-fax / PR8 manitasfritas)
+# sequoia-openpgp = "1"  # activar en PR7
+# sharks = "0.5"          # activar en PR8 (Shamir)
+
+# Provider SDKs (activados gradualmente PR2/PR5)
+# async-stripe = { version = "0.40", features = ["runtime-tokio-hyper-rustls"] }
+# octocrab = "0.42"
+
+[dev-dependencies]
+proptest = "1"
+axum-test = "16"
+wiremock = "0.6"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+opt-level = 3
+
+[profile.dev]
+opt-level = 0
+debug = 1
+
+[workspace]
+# Single-crate workspace; añadir miembros (e.g. crates/sdk) cuando se separen.
