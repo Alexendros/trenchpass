@@ -42,3 +42,16 @@ impl ToolHandler for ListProjects {
         bearer_get_json(&self.http, NS, &url, &token, &[]).await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn register_anade_list_projects() {
+        let mut b = RegistryBuilder::default();
+        register(&mut b, "http://example.invalid");
+        let reg = b.finish();
+        assert!(reg.get("dokploy.list_projects").is_some());
+    }
+}

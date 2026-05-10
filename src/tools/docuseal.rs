@@ -6,9 +6,9 @@ use reqwest::Client;
 use serde_json::Value;
 use tracing::instrument;
 
-use super::shared::{http_client, load_secret_field};
+use super::shared::{auth_get_json, http_client, load_secret_field, AuthScheme};
 use super::{RegistryBuilder, ToolContext, ToolDef, ToolHandler};
-use crate::error::{Error, Result};
+use crate::error::Result;
 
 const VAULT_PATH: &str = "docuseal/api_token";
 const TOKEN_FIELD: &str = "token";
@@ -40,21 +40,29 @@ impl ToolHandler for ListTemplates {
     async fn invoke(&self, ctx: &ToolContext<'_>, _params: Value) -> Result<Value> {
         let token = load_secret_field(ctx, VAULT_PATH, TOKEN_FIELD).await?;
         let url = format!("{}/templates", self.base_url.trim_end_matches('/'));
-        let resp = self
-            .http
-            .get(&url)
-            .header("X-Auth-Token", &token)
-            .send()
-            .await
-            .map_err(|e| Error::Upstream(format!("docuseal send: {e}")))?;
-        let status = resp.status();
-        let body = resp
-            .text()
-            .await
-            .map_err(|e| Error::Upstream(format!("docuseal read: {e}")))?;
-        if !status.is_success() {
-            return Err(Error::Upstream(format!("docuseal {status}: {body}")));
-        }
-        serde_json::from_str(&body).map_err(|e| Error::Upstream(format!("docuseal parse: {e}")))
+        auth_get_json(
+            &self.http,
+            NS,
+            &url,
+            &AuthScheme::Header {
+                name: "X-Auth-Token",
+                value: token,
+            },
+            &[],
+        )
+        .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn register_anade_list_templates() {
+        let mut b = RegistryBuilder::default();
+        register(&mut b, "http://example.invalid");
+        let reg = b.finish();
+        assert!(reg.get("docuseal.list_templates").is_some());
     }
 }

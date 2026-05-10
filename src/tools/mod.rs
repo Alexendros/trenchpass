@@ -111,8 +111,9 @@ impl BaseUrls {
             notion: "https://api.notion.com/v1".into(),
             stripe: "https://api.stripe.com/v1".into(),
             github: "https://api.github.com".into(),
-            // Self-hosted: el operador debe configurar URL real vía env
-            // (ver `BaseUrls::from_env`). Defaults se sobrescriben en prod.
+            // Self-hosted: el operador DEBE pasar BaseUrls custom a
+            // `ToolRegistry::with_bases(BaseUrls{ forgejo: ..., dokploy: ..., ... })`
+            // (no hay env loader auto · pendiente PR follow-up `BaseUrls::from_env`).
             forgejo: "https://forgejo.local".into(),
             dokploy: "https://dokploy.local".into(),
             hostinger: "https://developers.hostinger.com".into(),

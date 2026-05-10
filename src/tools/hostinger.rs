@@ -44,3 +44,16 @@ impl ToolHandler for ListVps {
         bearer_get_json(&self.http, NS, &url, &token, &[]).await
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn register_anade_list_vps() {
+        let mut b = RegistryBuilder::default();
+        register(&mut b, "http://example.invalid");
+        let reg = b.finish();
+        assert!(reg.get("hostinger.list_vps").is_some());
+    }
+}

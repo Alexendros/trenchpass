@@ -44,7 +44,10 @@ impl ToolHandler for GetAccount {
                 Error::Upstream("gocardless_psd2.get_account requiere `account_id`".into())
             })?;
         // UUID-like guard (GoCardless usa UUIDs sin guiones tipo).
-        if !id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') || id.len() > 64 {
+        if id.is_empty()
+            || !id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+            || id.len() > 64
+        {
             return Err(Error::Upstream(
                 "gocardless_psd2: account_id inválido".into(),
             ));
@@ -55,5 +58,38 @@ impl ToolHandler for GetAccount {
             self.base_url.trim_end_matches('/')
         );
         bearer_get_json(&self.http, NS, &url, &token, &[]).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn register_anade_get_account() {
+        let mut b = RegistryBuilder::default();
+        register(&mut b, "http://example.invalid");
+        let reg = b.finish();
+        assert!(reg.get("gocardless_psd2.get_account").is_some());
+    }
+
+    /// Reproduce el bug pre-PR3.4: empty string vacuamente válido →
+    /// URL `accounts//` (path injection / wrong endpoint).
+    #[test]
+    fn account_id_empty_es_invalido() {
+        let id = "";
+        let valid = !id.is_empty()
+            && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+            && id.len() <= 64;
+        assert!(!valid, "empty account_id debe ser inválido");
+    }
+
+    #[test]
+    fn account_id_demasiado_largo_es_invalido() {
+        let id: String = "a".repeat(65);
+        let valid = !id.is_empty()
+            && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+            && id.len() <= 64;
+        assert!(!valid, "len=65 debe ser inválido (cap 64)");
     }
 }
