@@ -15,13 +15,26 @@ pub mod vault;
 use std::sync::{Arc, OnceLock};
 
 /// Instala el `CryptoProvider` `aws-lc-rs` como default proceso-global.
-/// Idempotente: la segunda llamada es no-op (el segundo `install_default`
-/// devolvería `Err`, lo ignoramos vía `OnceLock`). DEBE invocarse antes de
-/// cualquier `ServerConfig::builder()` o constructor de `rustls`.
+/// Idempotente vía `OnceLock`: la segunda llamada es no-op.
+/// Si otro provider (e.g. `ring` instalado por una dep transitiva con ctor)
+/// ya estaba registrado, `install_default` devuelve `Err` y emitimos un
+/// `warn!` ruidoso — la garantía FIPS-friendly se pierde silenciosamente
+/// si no se vigila este log.
+/// DEBE invocarse antes de cualquier `ServerConfig::builder()` o
+/// constructor de `rustls`.
 pub fn init_crypto() {
     static ONCE: OnceLock<()> = OnceLock::new();
     ONCE.get_or_init(|| {
-        let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+        if rustls::crypto::aws_lc_rs::default_provider()
+            .install_default()
+            .is_err()
+        {
+            tracing::warn!(
+                target: "trenchpass.crypto",
+                "aws-lc-rs no pudo instalarse como CryptoProvider default · otro provider \
+                 (probablemente ring) ya estaba registrado · garantía FIPS-friendly perdida"
+            );
+        }
     });
 }
 

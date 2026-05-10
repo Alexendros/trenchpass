@@ -26,17 +26,33 @@ async fn main() -> Result<()> {
         "starting TrenchPass gateway"
     );
 
-    let state = AppState::build(config).await.context("AppState build")?;
-    let bind: SocketAddr = state.config.server.bind;
-    let app = transport::router(state.clone());
+    // RAII guard: garantiza flush de spans/metrics OTLP aunque cualquier path
+    // de `serve_*` (bind error, TLS build error, axum-server error) propague
+    // un `Err` antes del final feliz.
+    let _otel_guard = OtelShutdownGuard;
 
-    match state.config.tls.mode {
-        TlsMode::Off => serve_plain(bind, app).await?,
-        TlsMode::Static | TlsMode::VaultPki => serve_tls(bind, app, &state).await?,
+    let result: Result<()> = async {
+        let state = AppState::build(config).await.context("AppState build")?;
+        let bind: SocketAddr = state.config.server.bind;
+        let app = transport::router(state.clone());
+        match state.config.tls.mode {
+            TlsMode::Off => serve_plain(bind, app).await,
+            TlsMode::Static | TlsMode::VaultPki => serve_tls(bind, app, &state).await,
+        }
     }
+    .await;
 
-    otel::shutdown();
-    Ok(())
+    if let Err(e) = &result {
+        tracing::error!(target: "trenchpass.boot", error = %e, "fatal error · shutting down");
+    }
+    result
+}
+
+struct OtelShutdownGuard;
+impl Drop for OtelShutdownGuard {
+    fn drop(&mut self) {
+        otel::shutdown();
+    }
 }
 
 async fn serve_plain(bind: SocketAddr, app: axum::Router) -> Result<()> {
