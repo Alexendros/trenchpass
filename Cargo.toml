@@ -27,8 +27,10 @@ rmcp = { version = "1.6", features = [
 axum = { version = "0.8", features = ["macros", "http2"] }
 tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.6", features = ["cors", "compression-gzip", "trace", "limit"] }
+http = "1"
 hyper = { version = "1", features = ["server", "http1", "http2"] }
 hyper-util = { version = "0.1", features = ["server", "tokio"] }
+futures-util = "0.3"
 
 # TLS · enterprise-grade mTLS (PR3)
 # rustls 0.23 con aws-lc-rs (FIPS-friendly, AWS-mantenido). default-features=false
@@ -41,6 +43,9 @@ x509-parser = "0.18"
 # axum-server expone `RustlsConfig::reload_from_pem` para hot reload sin tempfiles.
 # `tls-rustls` arrastra rustls+aws-lc-rs+tokio-rustls+pemfile+pki-types coherentes.
 axum-server = { version = "0.7", features = ["tls-rustls"] }
+# Re-export directo para acceder a TlsStream::get_ref().peer_certificates()
+# desde nuestro custom Accept (transport/peer_cert.rs).
+tokio-rustls = { version = "0.26", default-features = false }
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }
@@ -77,6 +82,7 @@ serde_json = "1"
 serde_yaml = "0.9"
 
 # Utilidades
+percent-encoding = "2"
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 thiserror = "2"

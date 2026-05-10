@@ -4,6 +4,7 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
+use axum_server::tls_rustls::RustlsAcceptor;
 use axum_server::Handle;
 use tokio::net::TcpListener;
 use tracing::{info, warn};
@@ -94,12 +95,16 @@ async fn serve_tls(
 
     tokio::spawn(graceful_shutdown(server_handle.clone()));
 
-    info!(target: "trenchpass.boot", "listening on {bind} (TLS)");
-    axum_server::bind_rustls(bind, handle.config)
+    info!(target: "trenchpass.boot", "listening on {bind} (TLS+mTLS peer cert wired)");
+    // Custom acceptor: RustlsAcceptor → PeerCertAcceptor (inyecta peer cert
+    // validado por WebPkiClientVerifier en Request::extensions).
+    let acceptor = transport::PeerCertAcceptor::new(RustlsAcceptor::new(handle.config));
+    axum_server::bind(bind)
+        .acceptor(acceptor)
         .handle(server_handle)
         .serve(app.into_make_service())
         .await
-        .context("axum_server::bind_rustls")?;
+        .context("axum_server bind+serve")?;
     Ok(())
 }
 
