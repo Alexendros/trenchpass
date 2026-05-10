@@ -43,11 +43,7 @@ impl ToolHandler for GetAccount {
             .ok_or_else(|| {
                 Error::Upstream("gocardless_psd2.get_account requiere `account_id`".into())
             })?;
-        // UUID-like guard (GoCardless usa UUIDs sin guiones tipo).
-        if id.is_empty()
-            || !id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
-            || id.len() > 64
-        {
+        if !is_valid_account_id(id) {
             return Err(Error::Upstream(
                 "gocardless_psd2: account_id inválido".into(),
             ));
@@ -59,6 +55,12 @@ impl ToolHandler for GetAccount {
         );
         bearer_get_json(&self.http, NS, &url, &token, &[]).await
     }
+}
+
+/// Predicate compartido entre handler y tests · evita drift de validación.
+/// UUID-like (GoCardless emite IDs alfanuméricos con guiones · max 64 chars).
+fn is_valid_account_id(id: &str) -> bool {
+    !id.is_empty() && id.len() <= 64 && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
 }
 
 #[cfg(test)]
@@ -73,23 +75,19 @@ mod tests {
         assert!(reg.get("gocardless_psd2.get_account").is_some());
     }
 
-    /// Reproduce el bug pre-PR3.4: empty string vacuamente válido →
-    /// URL `accounts//` (path injection / wrong endpoint).
     #[test]
-    fn account_id_empty_es_invalido() {
-        let id = "";
-        let valid = !id.is_empty()
-            && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
-            && id.len() <= 64;
-        assert!(!valid, "empty account_id debe ser inválido");
+    fn is_valid_account_id_acepta_uuid_y_alfanumerico() {
+        assert!(is_valid_account_id("3fa85f64-5717-4562-b3fc-2c963f66afa6"));
+        assert!(is_valid_account_id("ABC123"));
+        assert!(is_valid_account_id(&"a".repeat(64)));
     }
 
     #[test]
-    fn account_id_demasiado_largo_es_invalido() {
-        let id: String = "a".repeat(65);
-        let valid = !id.is_empty()
-            && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
-            && id.len() <= 64;
-        assert!(!valid, "len=65 debe ser inválido (cap 64)");
+    fn is_valid_account_id_rechaza_empty_largo_y_caracteres_invalidos() {
+        assert!(!is_valid_account_id(""));
+        assert!(!is_valid_account_id(&"a".repeat(65)));
+        assert!(!is_valid_account_id("../etc/passwd"));
+        assert!(!is_valid_account_id("acc/foo"));
+        assert!(!is_valid_account_id("acc@evil"));
     }
 }
