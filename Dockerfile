@@ -16,8 +16,9 @@ COPY Cargo.toml ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release || true
 RUN rm -rf src target/release/trenchpass target/release/deps/trenchpass*
 
-# Build real
+# Build real · `migrations/` necesario en compile-time (sqlx::migrate! valida el path).
 COPY src ./src
+COPY migrations ./migrations
 RUN cargo build --release --locked
 
 # ─── runtime ──────────────────────────────────────────────────────────────────
