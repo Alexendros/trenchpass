@@ -11,6 +11,7 @@ use std::time::{Duration, Instant};
 use dashmap::DashMap;
 use tracing::instrument;
 use vaultrs::client::{VaultClient as RawVaultClient, VaultClientSettingsBuilder};
+use vaultrs::error::ClientError;
 use vaultrs::kv2;
 
 use crate::config::VaultConfig;
@@ -75,6 +76,41 @@ impl VaultClient {
         };
         self.cache.insert(path.to_string(), secret.clone());
         Ok(secret)
+    }
+
+    /// Lista recursivamente todos los paths de un KV v2 mount empezando en
+    /// `prefix` (vacío = raíz). Usado por `sync::drift::detect_drift` para
+    /// enumerar el set actual de Vault y compararlo con el manifest.
+    /// Errores intermedios se propagan; un 404 en una sub-rama (no existe)
+    /// se trata como rama vacía (no error).
+    #[instrument(skip(self), fields(mount = %self.kv_mount))]
+    pub async fn list_kv_paths(&self, mount: &str, prefix: &str) -> Result<Vec<String>> {
+        let mut out = Vec::new();
+        let mut stack: Vec<String> = vec![prefix.to_string()];
+        while let Some(current) = stack.pop() {
+            let entries = match kv2::list(self.raw.as_ref(), mount, &current).await {
+                Ok(v) => v,
+                Err(ClientError::APIError { code: 404, .. }) => continue,
+                Err(e) => return Err(Error::Vault(format!("kv2/list {current}: {e}"))),
+            };
+            for entry in entries {
+                let path = if current.is_empty() {
+                    entry.trim_end_matches('/').to_string()
+                } else {
+                    format!(
+                        "{}/{}",
+                        current.trim_end_matches('/'),
+                        entry.trim_end_matches('/')
+                    )
+                };
+                if entry.ends_with('/') {
+                    stack.push(path);
+                } else {
+                    out.push(path);
+                }
+            }
+        }
+        Ok(out)
     }
 
     /// Invalida una entrada del cache (uso: tras `vault kv put`).
