@@ -9,7 +9,7 @@
 | PR | Hito | Estado |
 |----|------|--------|
 | **PR1** | Scaffold (Cargo workspace, axum router vacío, otel boot, vault client cache) | ✅ en revisión |
-| PR2 | Tools `notion` + `stripe` + `github`, audit Postgres en caliente | 🟡 pendiente |
+| PR2 | Tools `notion` + `stripe` + `github`, audit Postgres en caliente | 🟡 en curso (PR2a ✅ audit · PR2b 🟡 tools notion · PR2c 🟡 stripe+github) |
 | PR3 | mTLS rustls + Vault PKI con TTL ≤ 7 d | 🟡 pendiente |
 | PR4 | Proton Pass sync worker + drift detection | 🟡 pendiente |
 | PR5 | 10 namespaces restantes (forgejo, dokploy, hostinger, vercel, n8n, glitchtip, docuseal, proton, gocardless_dd, gocardless_psd2) | 🟡 pendiente |
