@@ -59,6 +59,7 @@ sqlx = { version = "0.8", default-features = false, features = [
   "uuid",
   "json",
   "macros",
+  "migrate",
 ] }
 
 # HTTP cliente para upstream providers
@@ -92,6 +93,12 @@ figment = { version = "0.10", features = ["env", "toml"] }
 # Provider SDKs (activados gradualmente PR2/PR5)
 # async-stripe = { version = "0.40", features = ["runtime-tokio-hyper-rustls"] }
 # octocrab = "0.42"
+
+[features]
+default = []
+# Activa los tests de integración Postgres (`#[sqlx::test]`).
+# Requiere `DATABASE_URL` apuntando a un superusuario que pueda crear DBs efímeras.
+it-postgres = []
 
 [dev-dependencies]
 proptest = "1"
