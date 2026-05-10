@@ -8,6 +8,8 @@
 //! PR2 añade el handler MCP real sobre `transport-streamable-http-server`.
 
 pub mod mtls;
+pub mod peer_cert;
 pub mod sse;
 
+pub use peer_cert::{PeerCertAcceptor, PeerCertificate};
 pub use sse::router;

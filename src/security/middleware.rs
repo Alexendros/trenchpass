@@ -28,7 +28,7 @@ pub async fn auth_middleware(
     mut req: Request<Body>,
     next: Next,
 ) -> Result<Response> {
-    let consumer = authorize(&state, req.headers())?;
+    let consumer = authorize(&state, &req)?;
 
     if !state.rate_limiter.check(&consumer.id) {
         return Err(Error::RateLimited);
@@ -46,14 +46,15 @@ pub async fn auth_middleware(
     Ok(next.run(req).await)
 }
 
-fn authorize(state: &AppState, headers: &HeaderMap) -> Result<Consumer> {
-    let token = bearer::extract(headers)?;
+fn authorize(state: &AppState, req: &Request<Body>) -> Result<Consumer> {
+    let token = bearer::extract(req.headers())?;
 
     // PR1: solo dev resolver. PR2 sustituye por lookup en Vault.
     let consumer = bearer::resolve_dev(token, state.config.dev_bearer.as_deref())?;
 
-    // PR3 activa mTLS estricto:
-    if let Some(cn) = mtls::extract_cn(headers, state.config.tls.mtls_required)? {
+    // PR3.2: mTLS dispatcher · prefiere PeerCertificate extension (rustls
+    // direct path), cae a header X-Forwarded-Tls-Client-Cert (Traefik).
+    if let Some(cn) = mtls::extract_cn(req, state.config.tls.mtls_required)? {
         mtls::assert_match(&cn, &consumer.id)?;
     }
     Ok(consumer)
