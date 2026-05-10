@@ -3,9 +3,9 @@
 use std::net::SocketAddr;
 
 use anyhow::{Context, Result};
-use trenchpass::{config::Config, otel, transport, AppState};
 use tokio::net::TcpListener;
 use tracing::info;
+use trenchpass::{config::Config, otel, transport, AppState};
 
 #[tokio::main]
 async fn main() -> Result<()> {

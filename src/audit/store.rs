@@ -204,6 +204,9 @@ mod it {
         )
         .execute(&pool)
         .await;
-        assert!(res.is_err(), "outcome inválido debe ser rechazado por CHECK");
+        assert!(
+            res.is_err(),
+            "outcome inválido debe ser rechazado por CHECK"
+        );
     }
 }
