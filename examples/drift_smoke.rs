@@ -47,20 +47,8 @@ async fn main() -> Result<()> {
     // === Setup KV state ===
     println!("[setup] poblando vault: x/y · extra/path · z/keymismatch");
     let raw = vault_raw(&cfg)?;
-    kv2::set(
-        &raw,
-        mount,
-        "x/y",
-        &serde_json::json!({"token": "abc"}),
-    )
-    .await?;
-    kv2::set(
-        &raw,
-        mount,
-        "extra/path",
-        &serde_json::json!({"x": 1}),
-    )
-    .await?;
+    kv2::set(&raw, mount, "x/y", &serde_json::json!({"token": "abc"})).await?;
+    kv2::set(&raw, mount, "extra/path", &serde_json::json!({"x": 1})).await?;
     kv2::set(
         &raw,
         mount,
@@ -110,7 +98,10 @@ async fn main() -> Result<()> {
     );
     assert!(paths.contains(&"a/b"), "Missing debe ser sobre a/b");
     assert!(kinds.contains(&"extra_in_vault"), "falta ExtraInVault");
-    assert!(paths.contains(&"extra/path"), "Extra debe ser sobre extra/path");
+    assert!(
+        paths.contains(&"extra/path"),
+        "Extra debe ser sobre extra/path"
+    );
     assert!(kinds.contains(&"key_mismatch"), "falta KeyMismatch");
     assert!(
         paths.contains(&"z/keymismatch"),

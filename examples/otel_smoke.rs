@@ -31,7 +31,8 @@ async fn main() -> Result<()> {
         let _enter = tracing::info_span!("smoke.outer", req_id = "abc-123").entered();
         tracing::info!(target: "smoke", "outer info event");
         {
-            let _inner = tracing::info_span!("smoke.inner", path = "/healthz", status = 200).entered();
+            let _inner =
+                tracing::info_span!("smoke.inner", path = "/healthz", status = 200).entered();
             tracing::info!(target: "smoke", "inner info event");
             tracing::warn!(target: "smoke", "inner warn event");
         }
