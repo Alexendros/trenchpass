@@ -24,7 +24,7 @@ rmcp = { version = "1.6", features = [
 ] }
 
 # Web framework + middleware
-axum = { version = "0.7", features = ["macros", "http2"] }
+axum = { version = "0.8", features = ["macros", "http2"] }
 tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.6", features = ["cors", "compression-gzip", "trace", "limit"] }
 hyper = { version = "1", features = ["server", "http1", "http2"] }
@@ -102,7 +102,7 @@ it-postgres = []
 
 [dev-dependencies]
 proptest = "1"
-axum-test = "16"
+axum-test = "20"
 wiremock = "0.6"
 
 [profile.release]
