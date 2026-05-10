@@ -32,27 +32,14 @@ jobs:
 
   test:
     runs-on: ubuntu-24.04
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_PASSWORD: ci
-          POSTGRES_DB: audit
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    env:
-      DATABASE_URL: postgres://postgres:ci@localhost:5432/audit
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
-      - name: Apply audit schema
-        run: PGPASSWORD=ci psql -h localhost -U postgres -d audit -f sql/init_audit.sql
+      # Tests por defecto (sin `it-postgres`): unitarios + wiremock, no requieren PG.
+      # Los tests `#[sqlx::test]` viven detrás del feature flag y se ejecutan en
+      # un job separado o vía `cargo test --features it-postgres` en local.
       - run: cargo test --locked --all-targets
 
   docker:

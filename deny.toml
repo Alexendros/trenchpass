@@ -7,7 +7,15 @@ all-features = true
 db-path  = "~/.cargo/advisory-db"
 db-urls  = ["https://github.com/rustsec/advisory-db"]
 yanked   = "deny"
-ignore   = []
+ignore   = [
+  # rsa 0.9 · timing side-channel (Marvin attack). Llega via sqlx-mysql que
+  # NO usamos (default-features=false en sqlx + solo postgres). Sin fix upstream.
+  # Reevaluar al subir sqlx a 0.9.
+  "RUSTSEC-2023-0071",
+  # rustls-pemfile 2.x · advisory informativo (no CVE). Pendiente migrar al
+  # crate sucesor cuando rustls publique guidance.
+  "RUSTSEC-2025-0134",
+]
 
 [licenses]
 allow = [
@@ -22,6 +30,7 @@ allow = [
     "Unicode-3.0",
     "Zlib",
     "CC0-1.0",
+    "CDLA-Permissive-2.0",  # webpki-roots data
     "OpenSSL",
     # Las siguientes solo aplican porque el binario final es AGPL-3.0-or-later.
     "AGPL-3.0-or-later",
