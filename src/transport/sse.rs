@@ -7,12 +7,14 @@ use axum::{
     http::StatusCode,
     middleware,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde_json::{json, Value};
 
-use crate::error::{Error, Result};
+use crate::auth::Consumer;
+use crate::error::Result;
 use crate::security::auth_middleware;
+use crate::tools::dispatch;
 use crate::AppState;
 
 pub fn router(state: Arc<AppState>) -> Router {
@@ -57,9 +59,17 @@ async fn list_tools(State(state): State<Arc<AppState>>) -> Json<Value> {
 async fn invoke_tool(
     State(state): State<Arc<AppState>>,
     Path(name): Path<String>,
-    Json(_params): Json<Value>,
+    Extension(consumer): Extension<Consumer>,
+    Json(params): Json<Value>,
 ) -> Result<Json<Value>> {
-    // PR1: stub. PR2 enruta vía `state.tools.dispatch(name, params, consumer)`.
-    let _ = (state, name);
-    Err(Error::NotFound("tool dispatch llega en PR2".into()))
+    let out = dispatch(
+        &state.tools,
+        &state.audit,
+        &state.vault,
+        &consumer,
+        &name,
+        params,
+    )
+    .await?;
+    Ok(Json(out))
 }
