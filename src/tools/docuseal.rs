@@ -1,7 +1,60 @@
-//! Namespace `docuseal.*` · stub PR1. Implementación real en PR2/PR5.
+//! Namespace `docuseal.*` · API DocuSeal self-hosted.
+//! DocuSeal usa header `X-Auth-Token`.
 
-use super::ToolDef;
+use async_trait::async_trait;
+use reqwest::Client;
+use serde_json::Value;
+use tracing::instrument;
 
-pub fn tools() -> Vec<ToolDef> {
-    Vec::new()
+use super::shared::{http_client, load_secret_field};
+use super::{RegistryBuilder, ToolContext, ToolDef, ToolHandler};
+use crate::error::{Error, Result};
+
+const VAULT_PATH: &str = "docuseal/api_token";
+const TOKEN_FIELD: &str = "token";
+const NS: &str = "docuseal";
+
+pub fn register(b: &mut RegistryBuilder, base_url: &str) {
+    let http = http_client();
+    b.register(
+        ToolDef {
+            id: "docuseal.list_templates".into(),
+            namespace: NS,
+            description: "Lista plantillas de documentos DocuSeal (GET /templates).",
+        },
+        ListTemplates {
+            http,
+            base_url: base_url.to_string(),
+        },
+    );
+}
+
+struct ListTemplates {
+    http: Client,
+    base_url: String,
+}
+
+#[async_trait]
+impl ToolHandler for ListTemplates {
+    #[instrument(skip(self, ctx, _params), fields(tool = "docuseal.list_templates"))]
+    async fn invoke(&self, ctx: &ToolContext<'_>, _params: Value) -> Result<Value> {
+        let token = load_secret_field(ctx, VAULT_PATH, TOKEN_FIELD).await?;
+        let url = format!("{}/templates", self.base_url.trim_end_matches('/'));
+        let resp = self
+            .http
+            .get(&url)
+            .header("X-Auth-Token", &token)
+            .send()
+            .await
+            .map_err(|e| Error::Upstream(format!("docuseal send: {e}")))?;
+        let status = resp.status();
+        let body = resp
+            .text()
+            .await
+            .map_err(|e| Error::Upstream(format!("docuseal read: {e}")))?;
+        if !status.is_success() {
+            return Err(Error::Upstream(format!("docuseal {status}: {body}")));
+        }
+        serde_json::from_str(&body).map_err(|e| Error::Upstream(format!("docuseal parse: {e}")))
+    }
 }

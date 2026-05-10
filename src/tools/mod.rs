@@ -31,6 +31,7 @@ pub mod hostinger;
 pub mod n8n;
 pub mod notion;
 pub mod proton;
+mod shared;
 pub mod stripe;
 pub mod vercel;
 
@@ -85,34 +86,78 @@ pub struct ToolRegistry {
     by_id: BTreeMap<String, ToolEntry>,
 }
 
+/// Base URLs por namespace · permite override por test (wiremock) y por
+/// configuración (instancias self-hosted Forgejo / Dokploy / GlitchTip /
+/// DocuSeal / n8n).
+#[derive(Debug, Clone)]
+pub struct BaseUrls {
+    pub notion: String,
+    pub stripe: String,
+    pub github: String,
+    pub forgejo: String,
+    pub dokploy: String,
+    pub hostinger: String,
+    pub vercel: String,
+    pub n8n: String,
+    pub glitchtip: String,
+    pub docuseal: String,
+    pub gocardless_dd: String,
+    pub gocardless_psd2: String,
+}
+
+impl BaseUrls {
+    pub fn production() -> Self {
+        Self {
+            notion: "https://api.notion.com/v1".into(),
+            stripe: "https://api.stripe.com/v1".into(),
+            github: "https://api.github.com".into(),
+            // Self-hosted: el operador debe configurar URL real vía env
+            // (ver `BaseUrls::from_env`). Defaults se sobrescriben en prod.
+            forgejo: "https://forgejo.local".into(),
+            dokploy: "https://dokploy.local".into(),
+            hostinger: "https://developers.hostinger.com".into(),
+            vercel: "https://api.vercel.com".into(),
+            n8n: "https://n8n.local".into(),
+            glitchtip: "https://glitchtip.local".into(),
+            docuseal: "https://docuseal.local".into(),
+            gocardless_dd: "https://api.gocardless.com".into(),
+            gocardless_psd2: "https://bankaccountdata.gocardless.com".into(),
+        }
+    }
+}
+
 impl ToolRegistry {
     /// Construye el registry con upstreams en producción.
     pub fn build() -> Arc<Self> {
-        Self::with_bases(
-            "https://api.notion.com/v1",
-            "https://api.stripe.com/v1",
-            "https://api.github.com",
-        )
+        Self::with_bases(BaseUrls::production())
     }
 
     /// Variante mantenida para tests existentes (solo notion).
     pub fn with_notion_base(notion_base: &str) -> Arc<Self> {
-        Self::with_bases(
-            notion_base,
-            "https://api.stripe.com/v1",
-            "https://api.github.com",
-        )
+        Self::with_bases(BaseUrls {
+            notion: notion_base.into(),
+            ..BaseUrls::production()
+        })
     }
 
-    /// Construye el registry permitiendo override de los 3 base URLs.
+    /// Construye el registry permitiendo override de TODOS los base URLs.
     /// Usado por tests para apuntar a wiremock.
-    pub fn with_bases(notion_base: &str, stripe_base: &str, github_base: &str) -> Arc<Self> {
-        let mut b = RegistryBuilder::default();
-        notion::register(&mut b, notion_base);
-        stripe::register(&mut b, stripe_base);
-        github::register(&mut b, github_base);
-        // Resto (10 namespaces) se cablean en PR5.
-        Arc::new(b.finish())
+    pub fn with_bases(b: BaseUrls) -> Arc<Self> {
+        let mut rb = RegistryBuilder::default();
+        notion::register(&mut rb, &b.notion);
+        stripe::register(&mut rb, &b.stripe);
+        github::register(&mut rb, &b.github);
+        forgejo::register(&mut rb, &b.forgejo);
+        dokploy::register(&mut rb, &b.dokploy);
+        hostinger::register(&mut rb, &b.hostinger);
+        vercel::register(&mut rb, &b.vercel);
+        n8n::register(&mut rb, &b.n8n);
+        glitchtip::register(&mut rb, &b.glitchtip);
+        docuseal::register(&mut rb, &b.docuseal);
+        gocardless_dd::register(&mut rb, &b.gocardless_dd);
+        gocardless_psd2::register(&mut rb, &b.gocardless_psd2);
+        proton::register(&mut rb);
+        Arc::new(rb.finish())
     }
 
     pub fn list(&self) -> Vec<&ToolDef> {
@@ -204,5 +249,34 @@ mod tests {
         let ids: Vec<_> = reg.list().iter().map(|d| d.id.as_str()).collect();
         assert!(ids.contains(&"notion.search"), "ids: {ids:?}");
         assert!(ids.contains(&"notion.fetch"), "ids: {ids:?}");
+    }
+
+    /// PR5: los 13 namespaces deben estar registrados en el registry default.
+    #[test]
+    fn registry_cubre_los_13_namespaces() {
+        let reg = ToolRegistry::with_bases(BaseUrls::production());
+        let ns = reg.namespaces();
+        let expected = [
+            "notion",
+            "stripe",
+            "github",
+            "forgejo",
+            "dokploy",
+            "hostinger",
+            "vercel",
+            "n8n",
+            "glitchtip",
+            "docuseal",
+            "gocardless_dd",
+            "gocardless_psd2",
+            "proton",
+        ];
+        for n in expected {
+            assert!(
+                ns.contains(&n),
+                "namespace `{n}` ausente · presentes: {ns:?}"
+            );
+        }
+        assert_eq!(ns.len(), expected.len(), "duplicados o sobrantes: {ns:?}");
     }
 }
