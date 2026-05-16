@@ -329,7 +329,7 @@ fn pseudo_jitter_ms(max: u64) -> i64 {
 
 #[cfg(test)]
 pub(crate) fn rcgen_test_chain() -> (String, String, String) {
-    use rcgen::{CertificateParams, DistinguishedName, DnType, KeyPair};
+    use rcgen::{CertificateParams, DistinguishedName, DnType, Issuer, KeyPair};
 
     let mut ca_params = CertificateParams::default();
     ca_params.distinguished_name = DistinguishedName::new();
@@ -338,6 +338,7 @@ pub(crate) fn rcgen_test_chain() -> (String, String, String) {
         .push(DnType::CommonName, "test-ca");
     ca_params.is_ca = rcgen::IsCa::Ca(rcgen::BasicConstraints::Unconstrained);
     let ca_key = KeyPair::generate().unwrap();
+    let ca_issuer = Issuer::from_params(&ca_params, &ca_key);
     let ca = ca_params.self_signed(&ca_key).unwrap();
 
     let mut leaf_params = CertificateParams::new(vec!["localhost".into()]).unwrap();
@@ -346,7 +347,7 @@ pub(crate) fn rcgen_test_chain() -> (String, String, String) {
         .distinguished_name
         .push(DnType::CommonName, "localhost");
     let leaf_key = KeyPair::generate().unwrap();
-    let leaf = leaf_params.signed_by(&leaf_key, &ca, &ca_key).unwrap();
+    let leaf = leaf_params.signed_by(&leaf_key, &ca_issuer).unwrap();
 
     (leaf.pem(), leaf_key.serialize_pem(), ca.pem())
 }

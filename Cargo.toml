@@ -122,7 +122,7 @@ proptest = "1"
 axum-test = "20"
 wiremock = "0.6"
 # Self-signed CA + leaf en tests sin Vault.
-rcgen = "0.13"
+rcgen = "0.14"
 tempfile = "3"
 
 [profile.release]
