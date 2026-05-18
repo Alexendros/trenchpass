@@ -16,7 +16,7 @@ path = "src/main.rs"
 # MCP SDK oficial Anthropic (https://docs.rs/rmcp). Pinned to 1.6 (línea estable actual).
 # Habilitamos server + macros + transport HTTP streamable (sustituto SSE en spec MCP 2025-03+)
 # y schemars para emitir JSON Schema de tools.
-rmcp = { version = "1.6", features = [
+rmcp = { version = "1.7", features = [
   "server",
   "macros",
   "schemars",
