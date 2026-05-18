@@ -86,7 +86,7 @@ siendo posible vía shards físicos.
 
 ## R
 
-**rmcp** — Rust SDK oficial de Anthropic para MCP. Versión actual 1.6.x.
+**rmcp** — Rust SDK oficial de Anthropic para MCP. Versión actual 1.7.x.
 
 **Rotación atómica** — `vault kv put` reescribe la KV v2 con una nueva versión.
 El gateway detecta la versión nueva y purga su cache.

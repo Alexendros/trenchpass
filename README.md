@@ -79,7 +79,7 @@ curl -H "Authorization: Bearer $TRENCHPASS_DEV_BEARER" http://localhost:8300/too
 
 ## Notas técnicas
 
-- **`rmcp` 1.6** (latest crates.io). Habilitamos `transport-streamable-http-server` (sustituye
+- **`rmcp` 1.7** (latest crates.io). Habilitamos `transport-streamable-http-server` (sustituye
   al SSE clásico conforme a la revisión MCP 2025-03+); el plan `propuesta_#96` referenciaba
   `rmcp = "0.x"` antes de la 1.0 — adaptamos a la API actual.
 - **Workspace single-crate**. Si en el futuro extraemos un `crates/sdk` o
