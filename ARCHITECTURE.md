@@ -53,7 +53,7 @@ proveedor con el secreto vivo que recupera de Vault.
 - HTTPS terminado en Traefik (TLS 1.3) con `infra-mtls` activo.
 - El cert del cliente se pasa al gateway en `X-Forwarded-Tls-Client-Cert` (URI-encoded).
 - En PR3 ofrecemos también `transport::mtls` con `tokio-rustls` para escenarios sin Traefik.
-- MCP framing: `transport-streamable-http-server` de `rmcp` 1.6.
+- MCP framing: `transport-streamable-http-server` de `rmcp` 1.7.
 
 ### 3.2 Auth (`src/auth/`)
 1. `bearer::extract` → `Authorization: Bearer <token>`.
