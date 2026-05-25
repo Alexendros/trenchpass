@@ -106,7 +106,7 @@ figment = { version = "0.10", features = ["env", "toml"] }
 # y el builder ya instala `libssl-dev` (Dockerfile línea 8). distroless/cc-debian12
 # incluye libssl3 en runtime, así que el dynamic link cierra.
 # `compression` activa DEFLATE para mensajes comprimidos.
-sequoia-openpgp = { version = "1", default-features = false, features = ["crypto-openssl", "compression"] }
+sequoia-openpgp = { version = "2", default-features = false, features = ["crypto-openssl", "compression"] }
 # IMAP IDLE cliente para Proton IMAP TLS. Pasamos un `tokio_rustls::client::TlsStream`
 # (mismo `aws_lc_rs` provider que el resto del binario) como transporte.
 async-imap = { version = "0.10", default-features = false, features = ["runtime-tokio"] }

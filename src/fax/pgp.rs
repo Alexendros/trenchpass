@@ -137,7 +137,10 @@ pub(crate) mod test_support {
         {
             let message = Message::new(&mut sink);
             let message = Armorer::new(message).build().expect("armorer");
-            let signer = Signer::new(message, keypair).build().expect("signer build");
+            let signer = Signer::new(message, keypair)
+                .expect("signer new")
+                .build()
+                .expect("signer build");
             let mut lit = LiteralWriter::new(signer).build().expect("literal writer");
             lit.write_all(payload).expect("write payload");
             lit.finalize().expect("finalize");

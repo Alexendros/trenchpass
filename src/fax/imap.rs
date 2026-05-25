@@ -234,12 +234,13 @@ fn twoway_contains(hay: &[u8], needle: &[u8]) -> bool {
 /// nosotros usando `sequoia_openpgp::crypto::hash` (también usa OpenSSL en
 /// nuestro build).
 fn sha256_hex(bytes: &[u8]) -> String {
-    use sequoia_openpgp::crypto::hash::Digest;
     use sequoia_openpgp::types::HashAlgorithm;
-    let mut h = HashAlgorithm::SHA256.context().expect("sha256 context");
+    let mut h = HashAlgorithm::SHA256
+        .context()
+        .expect("sha256 context")
+        .for_digest();
     h.update(bytes);
-    let mut digest = vec![0u8; h.digest_size()];
-    let _ = h.digest(&mut digest);
+    let digest = h.into_digest().expect("digest finalize");
     hex_encode(&digest)
 }
 

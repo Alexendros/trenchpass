@@ -57,7 +57,7 @@ fn main() -> Result<()> {
     {
         let message = Message::new(&mut armored);
         let message = Armorer::new(message).build()?;
-        let signer = Signer::new(message, keypair).build()?;
+        let signer = Signer::new(message, keypair)?.build()?;
         let mut lit = LiteralWriter::new(signer).build()?;
         lit.write_all(payload)?;
         lit.finalize()?;
