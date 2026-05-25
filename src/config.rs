@@ -119,6 +119,10 @@ pub struct FaxConfig {
     pub imap_password: String,
     pub pgp_operator_fingerprint: String,
     pub poll_interval: Duration,
+    /// Path al armored OpenPGP public cert del operador (export ASCII de GPG).
+    /// Si `None`, el worker arranca pero rechaza cada mensaje con
+    /// `FaxError::NoOperatorCert` · útil para CI sin secretos reales.
+    pub operator_cert_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -228,6 +232,7 @@ impl Config {
             poll_interval: Duration::from_secs(
                 parse_env::<u64>("FAX_POLL_INTERVAL_SECS").unwrap_or(60),
             ),
+            operator_cert_path: parse_env::<PathBuf>("FAX_PGP_OPERATOR_CERT_PATH").ok(),
         };
 
         let mfritas = MfritasConfig {

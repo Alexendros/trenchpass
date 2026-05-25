@@ -6,6 +6,7 @@ pub mod audit;
 pub mod auth;
 pub mod config;
 pub mod error;
+pub mod fax;
 pub mod otel;
 pub mod security;
 pub mod sync;
@@ -45,7 +46,7 @@ use crate::security::{RateLimiter, ReplayCache};
 use crate::tools::ToolRegistry;
 use crate::vault::VaultClient;
 
-/// Estado global compartido por handlers axum.
+/// Estado global compartido por handlers axum y workers (sync, vía-fax, …).
 pub struct AppState {
     pub config: Config,
     pub vault: VaultClient,
@@ -53,6 +54,10 @@ pub struct AppState {
     pub tools: Arc<ToolRegistry>,
     pub rate_limiter: RateLimiter,
     pub replay_cache: ReplayCache,
+    /// Cert público del operador para verificar firmas vía-fax. `None` si
+    /// `FAX_PGP_OPERATOR_CERT_PATH` no apunta a un PEM/armored válido (el
+    /// worker rechazará todo mensaje con `FaxError::NoOperatorCert`).
+    pub fax_operator_cert: Option<Arc<sequoia_openpgp::Cert>>,
 }
 
 impl AppState {
@@ -62,6 +67,7 @@ impl AppState {
         let tools = ToolRegistry::build();
         let rate_limiter = RateLimiter::default();
         let replay_cache = ReplayCache::new();
+        let fax_operator_cert = load_operator_cert(&config.fax.operator_cert_path);
         Ok(Arc::new(Self {
             config,
             vault,
@@ -69,6 +75,32 @@ impl AppState {
             tools,
             rate_limiter,
             replay_cache,
+            fax_operator_cert,
         }))
+    }
+}
+
+fn load_operator_cert(path: &Option<std::path::PathBuf>) -> Option<Arc<sequoia_openpgp::Cert>> {
+    use sequoia_openpgp::parse::Parse;
+    let path = path.as_ref()?;
+    match sequoia_openpgp::Cert::from_file(path) {
+        Ok(cert) => {
+            tracing::info!(
+                target: "fax.boot",
+                path = %path.display(),
+                fpr = %cert.fingerprint(),
+                "operator cert cargado"
+            );
+            Some(Arc::new(cert))
+        }
+        Err(e) => {
+            tracing::error!(
+                target: "fax.boot",
+                path = %path.display(),
+                error = %e,
+                "no se pudo cargar operator cert · vía-fax rechazará todo mensaje"
+            );
+            None
+        }
     }
 }

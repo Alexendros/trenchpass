@@ -41,6 +41,10 @@ async fn main() -> Result<()> {
         // drift_interval no están configurados, el worker queda desactivado.
         spawn_sync_worker_if_configured(&state);
 
+        // PR7: vía-fax worker. Si FaxConfig está incompleta, devuelve None
+        // sin error · vía-fax es opcional para arrancar el gateway.
+        let _fax_handle = trenchpass::fax::spawn_fax_worker(state.clone());
+
         match state.config.tls.mode {
             TlsMode::Off => serve_plain(bind, app).await,
             TlsMode::Static | TlsMode::VaultPki => serve_tls(bind, app, &state).await,

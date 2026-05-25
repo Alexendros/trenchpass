@@ -5,6 +5,29 @@ Sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/) y
 
 ## [Unreleased]
 
+### Added · PR7 vía-fax (canal PGP out-of-band)
+
+- `src/fax/{mod,pgp,commands,dispatch,imap}.rs` · worker IMAP que polea
+  Proton (`imap.protonmail.ch:993` por defecto), verifica firma PGP del
+  operador con `sequoia-openpgp` y despacha comandos atómicos.
+- Verbos soportados:
+  - `invalidate-all` ✅ limpia el cache local de `VaultClient`.
+  - `invalidate` ✅ limpia una entrada KV concreta.
+  - `revoke` / `seal-vault` ⏳ stubs con `FaxError::Dispatch` · cableado a
+    `vaultrs::pki::cert::revoke` y `vaultrs::sys::seal` queda para PR7.1.
+- Anti-replay reusa `security::ReplayCache` (timestamp ±5 min, nonce único).
+- Audit log en `audit_events` con `consumer_id='via-fax'`, `action='fax.<verb>'`
+  y `detail.signature_sha256` para correlación forense.
+- `AppState::fax_operator_cert` cargado de `FAX_PGP_OPERATOR_CERT_PATH`
+  (export armored OpenPGP, no PEM x509).
+- Worker arrancado en `main.rs` sólo si la config está completa; ausencia
+  de config no es error.
+- Deps: `sequoia-openpgp 1` (feature `crypto-openssl`), `async-imap 0.10`,
+  `mailparse 0.15`.
+- 17 tests inline · `cargo test --lib fax` verde · 87/87 totales.
+- Runbook: `docs/runbooks/via-fax.md` (gpg --sign --armor, troubleshooting).
+- Example offline: `cargo run --example fax_smoke`.
+
 ## [0.1.0] · 2026-05-10 · PR1 scaffold
 
 ### Added
