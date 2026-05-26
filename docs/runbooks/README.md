@@ -9,6 +9,7 @@ un operador novato debe poder ejecutarlo sin contexto adicional.
 | [rotate-provider-token.md](rotate-provider-token.md) | Rotación rutinaria de credencial. |
 | [revoke-consumer.md](revoke-consumer.md) | Sospecha de Bearer/cert filtrado. |
 | [recovery-drill.md](recovery-drill.md) | Drill semestral de recovery. |
+| [via-fax.md](via-fax.md) | Comando out-of-band PGP-firmado (PR7). |
 | [manitasfritas/operator.md](manitasfritas/operator.md) | Procedimiento ManitasFritas (PR8). |
 | [incident-response.md](incident-response.md) | Procedimiento P0/P1. |
 

@@ -100,8 +100,18 @@ nonzero_ext = "0.3"
 dotenvy = "0.15"
 figment = { version = "0.10", features = ["env", "toml"] }
 
-# Crypto / firma (placeholders PR7 vía-fax / PR8 manitasfritas)
-# sequoia-openpgp = "1"  # activar en PR7
+# Crypto / firma · vía-fax (PR7)
+# Backend OpenSSL: `crypto-rust` está marcado experimental upstream
+# (https://docs.rs/sequoia-openpgp/latest/sequoia_openpgp/#crypto-backends),
+# y el builder ya instala `libssl-dev` (Dockerfile línea 8). distroless/cc-debian12
+# incluye libssl3 en runtime, así que el dynamic link cierra.
+# `compression` activa DEFLATE para mensajes comprimidos.
+sequoia-openpgp = { version = "2", default-features = false, features = ["crypto-openssl", "compression"] }
+# IMAP IDLE cliente para Proton IMAP TLS. Pasamos un `tokio_rustls::client::TlsStream`
+# (mismo `aws_lc_rs` provider que el resto del binario) como transporte.
+async-imap = { version = "0.10", default-features = false, features = ["runtime-tokio"] }
+# Parseo MIME del cuerpo recibido por IMAP (busca la parte text/plain con la firma PGP).
+mailparse = "0.15"
 # sharks = "0.5"          # activar en PR8 (Shamir)
 
 # Provider SDKs (activados gradualmente PR2/PR5)

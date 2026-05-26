@@ -32,6 +32,12 @@ allow = [
     "CC0-1.0",
     "CDLA-Permissive-2.0",  # webpki-roots data
     "OpenSSL",
+    "0BSD",                 # mailparse · zero-clause BSD (PR7 vía-fax)
+    "BSL-1.0",              # xxhash-rust · Boost Software License (PR7, vía sequoia)
+    # LGPL es copyleft pero la cláusula 3 (static linking exception) permite
+    # vinculación en binarios propietarios siempre que se entregue el código.
+    # AGPL ya cubre eso para nosotros · safe.
+    "LGPL-2.0-or-later",    # buffered-reader · transitivo de sequoia-openpgp (PR7)
     # Las siguientes solo aplican porque el binario final es AGPL-3.0-or-later.
     "AGPL-3.0-or-later",
     "AGPL-3.0",
@@ -48,7 +54,11 @@ wildcards = "deny"
 allow = []
 deny = [
     # Crates que duplican funcionalidad / problemas conocidos.
-    { name = "openssl-sys" },          # forzamos rustls
+    # openssl-sys solo permitido vía sequoia-openpgp (crypto-openssl backend
+    # de PR7) y su crate intermedio `openssl`. Cualquier otra dep que pretenda
+    # arrastrar openssl-sys (e.g. native-tls, reqwest con default features) queda
+    # rechazada · forzamos rustls en el resto del stack.
+    { name = "openssl-sys", wrappers = ["openssl", "sequoia-openpgp"] },
     { name = "native-tls" },           # forzamos rustls
 ]
 
