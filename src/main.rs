@@ -152,7 +152,7 @@ async fn serve_tls(
     Ok(())
 }
 
-async fn graceful_shutdown(handle: Handle) {
+async fn graceful_shutdown(handle: Handle<SocketAddr>) {
     ctrl_c_or_term().await;
     info!(target: "trenchpass.boot", "shutdown signal · graceful 30s");
     handle.graceful_shutdown(Some(Duration::from_secs(30)));
