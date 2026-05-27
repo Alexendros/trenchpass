@@ -1,0 +1,58 @@
+# Dependabot auto-merge
+#
+# Aprueba y activa auto-merge en PRs de dependabot cuando son patch o minor.
+# Major bumps (semver-major) NO se auto-mergean: requieren revisión humana
+# porque pueden romper API.
+#
+# Pre-requisitos:
+#   1. Branch protection en `main` con "Require approvals = 0" o que
+#      `github-actions[bot]` esté permitido como aprobador.
+#   2. "Allow auto-merge" activado en Settings → General → Pull Requests.
+#   3. CI verde como Required status check (fmt, clippy, test, audit, deny).
+#
+# Seguridad:
+#   - `pull_request_target` corre con secretos en contexto del base branch,
+#     NO del fork/PR. Filtramos por `github.actor == 'dependabot[bot]'`
+#     para que ningún otro actor pueda invocar esta lógica.
+#   - Permissions mínimos: solo `pull-requests` y `contents`.
+name: Dependabot auto-merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: write
+
+jobs:
+  automerge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-approve patch and minor
+        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge (squash) for patch and minor
+        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Label majors for manual review
+        if: steps.meta.outputs.update-type == 'version-update:semver-major'
+        run: gh pr edit "$PR_URL" --add-label "needs-human-review"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
