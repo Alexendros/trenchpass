@@ -10,30 +10,42 @@ permissions:
   id-token: write   # cosign keyless
 
 jobs:
+  # ────────────────────────────────────────────────────────────────────
+  # Gate semver previo · valida que el tag cumple SemVer 2.0 estricta
+  # antes de tocar el registry. Lib en plantillas (Pipelines 2026-05).
+  # ────────────────────────────────────────────────────────────────────
+  gate:
+    name: Validar SemVer
+    uses: Alexendros/plantillas/.github/workflows/_lib-gate-semver.yml@main
+    with:
+      ref: ${{ github.ref_name }}
+      require-stable: false
+
   build-and-publish:
+    needs: gate
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v4
 
-      - uses: docker/login-action@v4
+      - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/alexendros/trenchpass
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ needs.gate.outputs.is-stable == 'true' }}
 
       - id: build
         uses: docker/build-push-action@v7
@@ -64,6 +76,22 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
+          prerelease: ${{ needs.gate.outputs.is-stable != 'true' }}
           files: |
             THIRD_PARTY_NOTICES.md
             LICENSE
+
+      - name: Job summary
+        if: always()
+        uses: Alexendros/plantillas/.github/actions/job-summary@main
+        with:
+          title: "Release ${{ needs.gate.outputs.version }}"
+          status: ${{ job.status }}
+          items: |
+            semver=${{ needs.gate.outputs.is-stable == 'true' && 'ok' || 'warn' }}=v${{ needs.gate.outputs.version }} (stable=${{ needs.gate.outputs.is-stable }})
+            docker=${{ steps.build.outcome == 'success' && 'ok' || 'fail' }}=multi-arch (amd64,arm64) · push=true
+            cosign=info=keyless · sigstore.dev
+            release=ok=generate_release_notes=true · prerelease=${{ needs.gate.outputs.is-stable != 'true' }}
+          notes: |
+            Registry: ghcr.io/alexendros/trenchpass
+            Tag `latest` se actualiza SOLO si la versión es estable (no pre-release).
