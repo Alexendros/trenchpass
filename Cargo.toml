@@ -109,7 +109,7 @@ figment = { version = "0.10", features = ["env", "toml"] }
 sequoia-openpgp = { version = "2", default-features = false, features = ["crypto-openssl", "compression"] }
 # IMAP IDLE cliente para Proton IMAP TLS. Pasamos un `tokio_rustls::client::TlsStream`
 # (mismo `aws_lc_rs` provider que el resto del binario) como transporte.
-async-imap = { version = "0.10", default-features = false, features = ["runtime-tokio"] }
+async-imap = { version = "0.11", default-features = false, features = ["runtime-tokio"] }
 # Parseo MIME del cuerpo recibido por IMAP (busca la parte text/plain con la firma PGP).
 mailparse = "0.15"
 # sharks = "0.5"          # activar en PR8 (Shamir)
