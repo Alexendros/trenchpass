@@ -111,7 +111,7 @@ sequoia-openpgp = { version = "2", default-features = false, features = ["crypto
 # (mismo `aws_lc_rs` provider que el resto del binario) como transporte.
 async-imap = { version = "0.10", default-features = false, features = ["runtime-tokio"] }
 # Parseo MIME del cuerpo recibido por IMAP (busca la parte text/plain con la firma PGP).
-mailparse = "0.15"
+mailparse = "0.16"
 # sharks = "0.5"          # activar en PR8 (Shamir)
 
 # Provider SDKs (activados gradualmente PR2/PR5)
