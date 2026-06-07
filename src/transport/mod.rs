@@ -7,6 +7,7 @@
 //!
 //! PR2 añade el handler MCP real sobre `transport-streamable-http-server`.
 
+pub mod admin;
 pub mod mtls;
 pub mod peer_cert;
 pub mod sse;
