@@ -1,0 +1,695 @@
+{
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "mtls": {
+        "type": "mutualTLS"
+      }
+    }
+  },
+  "info": {
+    "description": "Catálogo de tools del gateway · una API por tool (POST /tool/{id}).",
+    "title": "TrenchPass MCP Gateway",
+    "version": "0.1.0"
+  },
+  "openapi": "3.0.3",
+  "paths": {
+    "/tool/docuseal.list_templates": {
+      "post": {
+        "operationId": "docuseal.list_templates",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Lista plantillas de documentos DocuSeal (GET /templates).",
+        "tags": [
+          "docuseal"
+        ]
+      }
+    },
+    "/tool/dokploy.list_projects": {
+      "post": {
+        "operationId": "dokploy.list_projects",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Lista los proyectos en Dokploy (GET /api/projects.list).",
+        "tags": [
+          "dokploy"
+        ]
+      }
+    },
+    "/tool/forgejo.search_repos": {
+      "post": {
+        "operationId": "forgejo.search_repos",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Busca repositorios en una instancia Forgejo (GET /api/v1/repos/search).",
+        "tags": [
+          "forgejo"
+        ]
+      }
+    },
+    "/tool/github.get_repo": {
+      "post": {
+        "operationId": "github.get_repo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Metadata de repositorio (GET /repos/{owner}/{repo}).",
+        "tags": [
+          "github"
+        ]
+      }
+    },
+    "/tool/github.list_pulls": {
+      "post": {
+        "operationId": "github.list_pulls",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Lista pull requests del repo (GET /repos/{owner}/{repo}/pulls).",
+        "tags": [
+          "github"
+        ]
+      }
+    },
+    "/tool/glitchtip.list_projects": {
+      "post": {
+        "operationId": "glitchtip.list_projects",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Lista proyectos en una organización GlitchTip.",
+        "tags": [
+          "glitchtip"
+        ]
+      }
+    },
+    "/tool/gocardless_dd.list_customers": {
+      "post": {
+        "operationId": "gocardless_dd.list_customers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Lista clientes Direct Debit (GET /customers).",
+        "tags": [
+          "gocardless_dd"
+        ]
+      }
+    },
+    "/tool/gocardless_psd2.get_account": {
+      "post": {
+        "operationId": "gocardless_psd2.get_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Lee detalles de una cuenta bancaria PSD2 (GET /api/v2/accounts/{id}/).",
+        "tags": [
+          "gocardless_psd2"
+        ]
+      }
+    },
+    "/tool/hostinger.list_vps": {
+      "post": {
+        "operationId": "hostinger.list_vps",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Lista las VPS del operador (GET /api/vps/v1/virtual-machines).",
+        "tags": [
+          "hostinger"
+        ]
+      }
+    },
+    "/tool/n8n.list_workflows": {
+      "post": {
+        "operationId": "n8n.list_workflows",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Lista workflows de n8n (GET /api/v1/workflows).",
+        "tags": [
+          "n8n"
+        ]
+      }
+    },
+    "/tool/notion.fetch": {
+      "post": {
+        "operationId": "notion.fetch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Recupera una página Notion por id (GET /v1/pages/{id}).",
+        "tags": [
+          "notion"
+        ]
+      }
+    },
+    "/tool/notion.search": {
+      "post": {
+        "operationId": "notion.search",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Búsqueda libre en el workspace Notion (POST /v1/search).",
+        "tags": [
+          "notion"
+        ]
+      }
+    },
+    "/tool/proton.check_credentials": {
+      "post": {
+        "operationId": "proton.check_credentials",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Verifica que las credenciales Proton existen en Vault (no hace login). Placeholder hasta integración Proton Bridge / SDK oficial.",
+        "tags": [
+          "proton"
+        ]
+      }
+    },
+    "/tool/stripe.list_customers": {
+      "post": {
+        "operationId": "stripe.list_customers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Lista de clientes Stripe (GET /v1/customers).",
+        "tags": [
+          "stripe"
+        ]
+      }
+    },
+    "/tool/stripe.retrieve_balance": {
+      "post": {
+        "operationId": "stripe.retrieve_balance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Saldo disponible y pendiente (GET /v1/balance).",
+        "tags": [
+          "stripe"
+        ]
+      }
+    },
+    "/tool/vercel.list_projects": {
+      "post": {
+        "operationId": "vercel.list_projects",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "tool result"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [],
+            "mtls": []
+          }
+        ],
+        "summary": "Lista proyectos del equipo Vercel (GET /v9/projects).",
+        "tags": [
+          "vercel"
+        ]
+      }
+    }
+  },
+  "tools": [
+    {
+      "description": "Lista plantillas de documentos DocuSeal (GET /templates).",
+      "id": "docuseal.list_templates",
+      "namespace": "docuseal"
+    },
+    {
+      "description": "Lista los proyectos en Dokploy (GET /api/projects.list).",
+      "id": "dokploy.list_projects",
+      "namespace": "dokploy"
+    },
+    {
+      "description": "Busca repositorios en una instancia Forgejo (GET /api/v1/repos/search).",
+      "id": "forgejo.search_repos",
+      "namespace": "forgejo"
+    },
+    {
+      "description": "Metadata de repositorio (GET /repos/{owner}/{repo}).",
+      "id": "github.get_repo",
+      "namespace": "github"
+    },
+    {
+      "description": "Lista pull requests del repo (GET /repos/{owner}/{repo}/pulls).",
+      "id": "github.list_pulls",
+      "namespace": "github"
+    },
+    {
+      "description": "Lista proyectos en una organización GlitchTip.",
+      "id": "glitchtip.list_projects",
+      "namespace": "glitchtip"
+    },
+    {
+      "description": "Lista clientes Direct Debit (GET /customers).",
+      "id": "gocardless_dd.list_customers",
+      "namespace": "gocardless_dd"
+    },
+    {
+      "description": "Lee detalles de una cuenta bancaria PSD2 (GET /api/v2/accounts/{id}/).",
+      "id": "gocardless_psd2.get_account",
+      "namespace": "gocardless_psd2"
+    },
+    {
+      "description": "Lista las VPS del operador (GET /api/vps/v1/virtual-machines).",
+      "id": "hostinger.list_vps",
+      "namespace": "hostinger"
+    },
+    {
+      "description": "Lista workflows de n8n (GET /api/v1/workflows).",
+      "id": "n8n.list_workflows",
+      "namespace": "n8n"
+    },
+    {
+      "description": "Recupera una página Notion por id (GET /v1/pages/{id}).",
+      "id": "notion.fetch",
+      "namespace": "notion"
+    },
+    {
+      "description": "Búsqueda libre en el workspace Notion (POST /v1/search).",
+      "id": "notion.search",
+      "namespace": "notion"
+    },
+    {
+      "description": "Verifica que las credenciales Proton existen en Vault (no hace login). Placeholder hasta integración Proton Bridge / SDK oficial.",
+      "id": "proton.check_credentials",
+      "namespace": "proton"
+    },
+    {
+      "description": "Lista de clientes Stripe (GET /v1/customers).",
+      "id": "stripe.list_customers",
+      "namespace": "stripe"
+    },
+    {
+      "description": "Saldo disponible y pendiente (GET /v1/balance).",
+      "id": "stripe.retrieve_balance",
+      "namespace": "stripe"
+    },
+    {
+      "description": "Lista proyectos del equipo Vercel (GET /v9/projects).",
+      "id": "vercel.list_projects",
+      "namespace": "vercel"
+    }
+  ]
+}

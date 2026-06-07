@@ -13,6 +13,19 @@ use trenchpass::{otel, transport, AppState};
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Modo offline: `trenchpass --dump-schema` serializa el catálogo de tools a
+    // OpenAPI por stdout y sale. No toca Vault, Postgres ni OTLP · sirve para el
+    // codegen del cliente TS en CI (`cargo run -- --dump-schema > openapi.yaml`).
+    if std::env::args().any(|a| a == "--dump-schema") {
+        let registry = trenchpass::tools::ToolRegistry::build();
+        let doc = registry.openapi_schema();
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&doc).context("serializar openapi")?
+        );
+        return Ok(());
+    }
+
     let config = Config::from_env().context("config inválida")?;
     otel::init(&config.otel, &config.server.log_level).context("otel init")?;
     trenchpass::init_crypto();

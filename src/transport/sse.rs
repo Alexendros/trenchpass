@@ -1,4 +1,13 @@
-//! Router HTTP/SSE básico. PR2 lo reemplaza por el handler `rmcp` streamable-http.
+//! Router HTTP del gateway.
+//!
+//! Rutas:
+//!   - `GET  /healthz` · `GET /readyz`     → públicas (liveness/readiness).
+//!   - `POST /tool/:name`                  → invocación de tool (auth + scope).
+//!   - `GET  /tools`                       → catálogo de tools.
+//!   - `POST /admin/invalidate`            → expulsa cache de Vault (scope `admin:*`).
+//!   - `POST /admin/refresh-crl`           → flush cache para re-leer trust/CRL.
+//!
+//! Todas las rutas protegidas comparten `auth_middleware` (bearer + mTLS).
 
 use std::sync::Arc;
 

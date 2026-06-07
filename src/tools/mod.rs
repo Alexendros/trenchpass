@@ -31,7 +31,7 @@ pub mod hostinger;
 pub mod n8n;
 pub mod notion;
 pub mod proton;
-mod shared;
+pub mod shared;
 pub mod stripe;
 pub mod vercel;
 
@@ -175,6 +175,63 @@ impl ToolRegistry {
     pub fn get(&self, id: &str) -> Option<(&ToolDef, Arc<dyn ToolHandler>)> {
         self.by_id.get(id).map(|e| (&e.def, Arc::clone(&e.handler)))
     }
+
+    /// Documento OpenAPI 3.0 del catálogo de tools · consumido por el codegen
+    /// del cliente TypeScript (`packages/mcp-client-ts`) en Controlink.
+    ///
+    /// Cada tool se expone como `POST /tool/{id}` (mismo contrato que el router
+    /// real en `transport::sse`). El array de nivel superior `tools` duplica el
+    /// catálogo en forma plana para consumidores que no parsean OpenAPI.
+    pub fn openapi_schema(&self) -> Value {
+        let mut paths = serde_json::Map::new();
+        let mut tools = Vec::with_capacity(self.by_id.len());
+
+        for def in self.by_id.values().map(|e| &e.def) {
+            paths.insert(
+                format!("/tool/{}", def.id),
+                serde_json::json!({
+                    "post": {
+                        "operationId": def.id,
+                        "tags": [def.namespace],
+                        "summary": def.description,
+                        "security": [{"bearerAuth": [], "mtls": []}],
+                        "requestBody": {
+                            "required": true,
+                            "content": {"application/json": {"schema": {"type": "object"}}}
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "tool result",
+                                "content": {"application/json": {"schema": {"type": "object"}}}
+                            }
+                        }
+                    }
+                }),
+            );
+            tools.push(serde_json::json!({
+                "id": def.id,
+                "namespace": def.namespace,
+                "description": def.description,
+            }));
+        }
+
+        serde_json::json!({
+            "openapi": "3.0.3",
+            "info": {
+                "title": "TrenchPass MCP Gateway",
+                "version": env!("CARGO_PKG_VERSION"),
+                "description": "Catálogo de tools del gateway · una API por tool (POST /tool/{id})."
+            },
+            "components": {
+                "securitySchemes": {
+                    "bearerAuth": {"type": "http", "scheme": "bearer"},
+                    "mtls": {"type": "mutualTLS"}
+                }
+            },
+            "paths": paths,
+            "tools": tools,
+        })
+    }
 }
 
 /// Punto de entrada único para el endpoint HTTP. Hace scope check, invoca y audita.
@@ -279,5 +336,30 @@ mod tests {
             );
         }
         assert_eq!(ns.len(), expected.len(), "duplicados o sobrantes: {ns:?}");
+    }
+
+    /// El documento OpenAPI debe listar exactamente las 16 tools, una por path.
+    #[test]
+    fn openapi_lista_16_tools() {
+        let reg = ToolRegistry::with_bases(BaseUrls::production());
+        let doc = reg.openapi_schema();
+        let tools = doc["tools"].as_array().expect("tools array");
+        assert_eq!(tools.len(), reg.list().len(), "tools vs registry");
+        assert_eq!(
+            tools.len(),
+            16,
+            "se esperaban 16 tools, hay {}",
+            tools.len()
+        );
+        let paths = doc["paths"].as_object().expect("paths object");
+        assert_eq!(paths.len(), 16, "un path POST por tool");
+        // Sanity: cada tool aparece como POST /tool/{id}.
+        for def in reg.list() {
+            assert!(
+                paths.contains_key(&format!("/tool/{}", def.id)),
+                "falta path para {}",
+                def.id
+            );
+        }
     }
 }
