@@ -95,7 +95,7 @@ once_cell = "1"
 arc-swap = "1"
 governor = "0.10"     # rate limit token bucket
 nonzero_ext = "0.3"
-sha2 = "0.10"         # hash del bearer (token_hash en secret/consumers/<id>)
+sha2 = "0.11"         # hash del bearer (token_hash en secret/consumers/<id>)
 subtle = "2"          # comparación constant-time del hash (anti timing)
 
 # Config
