@@ -1,0 +1,29 @@
+name: "Seguridad · redirección"
+description: "No uses este formulario para reportar vulnerabilidades"
+title: "security: "
+labels: ["security-redirect"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Stop · No uses este formulario para reportes de seguridad
+
+        Las vulnerabilidades NO se reportan en issues públicos. Sigue el
+        procedimiento descrito en `SECURITY.md`.
+
+        Resumen del canal seguro:
+
+        - Email cifrado a `security@alexendros.me` (huella PGP `PENDIENTE_PUBLICAR_WKD`).
+        - Acuse de recibo en 72 horas hábiles.
+        - SLA de evaluación inicial: 7 días naturales.
+
+        Si has llegado aquí por error, cierra este issue y abre uno apropiado
+        (`bug` o `question`).
+  - type: checkboxes
+    id: confirmacion
+    attributes:
+      label: Confirmación
+      options:
+        - label: Entiendo que NO debo publicar detalles de vulnerabilidades en issues públicos.
+          required: true

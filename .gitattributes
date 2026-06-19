@@ -1,0 +1,27 @@
+# Atributos por defecto · final-of-line LF en todo el repositorio
+* text=auto eol=lf
+
+# Binarios comunes
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.webp binary
+*.ico  binary
+*.pdf  binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.zip  binary
+*.tar  binary
+*.gz   binary
+*.bz2  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.otf  binary
+
+# Linguist · trata estos paths como auto-generados
+pnpm-lock.yaml linguist-generated
+package-lock.json linguist-generated
+yarn.lock linguist-generated
