@@ -28,6 +28,26 @@ Sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/) y
 - Runbook: `docs/runbooks/via-fax.md` (gpg --sign --armor, troubleshooting).
 - Example offline: `cargo run --example fax_smoke`.
 
+### Changed
+
+_Sin cambios registrados en esta línea._
+
+### Deprecated
+
+_Sin entradas obsoletas registradas._
+
+### Removed
+
+_Sin elementos eliminados registrados._
+
+### Fixed
+
+_Sin correcciones registradas (ver «Verified» de 0.1.0 para fixes del scaffold)._
+
+### Security
+
+_Sin avisos de seguridad pendientes; ver `SECURITY.md` para la política de divulgación._
+
 ## [0.1.0] · 2026-05-10 · PR1 scaffold
 
 ### Added

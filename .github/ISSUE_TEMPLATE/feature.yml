@@ -1,0 +1,44 @@
+name: "Funcionalidad · propuesta"
+description: "Propón una nueva funcionalidad o mejora"
+title: "feat: "
+labels: ["feature", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Resume primero el problema o necesidad. Las funcionalidades sin
+        problema detrás suelen retrasarse.
+  - type: textarea
+    id: motivacion
+    attributes:
+      label: Motivación
+      description: ¿Qué necesidad o problema motiva la propuesta?
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Propuesta
+      description: Describe la solución propuesta. Si tiene API o interfaz, esboza.
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas consideradas
+      description: ¿Qué otras opciones has descartado y por qué?
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto adicional
+      description: Capturas, referencias, ejemplos en otros proyectos.
+  - type: checkboxes
+    id: previo
+    attributes:
+      label: Comprobaciones previas
+      options:
+        - label: He buscado funcionalidades similares ya propuestas o en curso.
+          required: true
+        - label: La propuesta encaja con el alcance del proyecto.
+          required: true

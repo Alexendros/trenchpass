@@ -1,0 +1,73 @@
+name: "Bug · informe de error"
+description: "Reporta un fallo reproducible en trenchpass"
+title: "bug: "
+labels: ["bug", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por reportar. Antes de continuar, comprueba que no exista
+        un issue similar en
+        https://github.com/alexendros/trenchpass/issues.
+        Para vulnerabilidades de seguridad consulta `SECURITY.md` y NO uses
+        este formulario.
+  - type: input
+    id: descripcion
+    attributes:
+      label: Descripción
+      description: ¿Qué ocurre? Resume el problema en una frase.
+      placeholder: "Al hacer X, ocurre Y, en lugar de Z."
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducir
+      description: Lista numerada de pasos exactos.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Comportamiento esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamiento real
+    validations:
+      required: true
+  - type: textarea
+    id: entorno
+    attributes:
+      label: Entorno
+      description: Versión del proyecto, sistema operativo, runtime.
+      placeholder: |
+        - Versión: vX.Y.Z
+        - SO: ...
+        - Node / runtime: ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs y trazas
+      description: Pega salidas relevantes. Sustituye datos sensibles por `[REDACTADO]`.
+      render: text
+  - type: checkboxes
+    id: previo
+    attributes:
+      label: Comprobaciones previas
+      options:
+        - label: He buscado issues abiertos y cerrados con el mismo problema.
+          required: true
+        - label: He probado con la última versión publicada.
+          required: false
+        - label: No estoy reportando una vulnerabilidad de seguridad.
+          required: true

@@ -1,0 +1,23 @@
+name: "Pregunta · uso o duda"
+description: "Pregunta sobre uso, configuración o decisiones del proyecto"
+title: "question: "
+labels: ["question"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Si tu duda es de uso general, considera abrirla en
+        Discussions en lugar de issues.
+  - type: textarea
+    id: pregunta
+    attributes:
+      label: Pregunta
+      description: Plantea con claridad qué quieres saber.
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: ¿Qué has consultado o probado ya? ¿Qué versión usas?
