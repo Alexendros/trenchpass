@@ -42,7 +42,7 @@ src/
 ## Build
 
 ```bash
-# toolbox / distrobox con Rust 1.82+
+# toolbox / distrobox con la toolchain Rust 1.88 (rust-toolchain.toml)
 toolbox enter rust    # o cualquier contenedor con rustup
 cargo build --release
 ```
