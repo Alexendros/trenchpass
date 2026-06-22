@@ -26,7 +26,7 @@ rmcp = { version = "1.7", features = [
 # Web framework + middleware
 axum = { version = "0.8", features = ["macros", "http2"] }
 tower = { version = "0.5", features = ["util"] }
-tower-http = { version = "0.6", features = ["cors", "compression-gzip", "trace", "limit"] }
+tower-http = { version = "0.7", features = ["cors", "compression-gzip", "trace", "limit"] }
 http = "1"
 hyper = { version = "1", features = ["server", "http1", "http2"] }
 hyper-util = { version = "0.1", features = ["server", "tokio"] }
