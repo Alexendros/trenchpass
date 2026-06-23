@@ -64,6 +64,10 @@ pub struct TlsConfig {
     pub client_ca: Option<PathBuf>,
     /// Si `true`, exige cert cliente válido. Si `false`, mTLS opcional.
     pub mtls_required: bool,
+    /// Si `true`, permite confiar en el header proxy `X-Forwarded-Tls-Client-Cert`
+    /// cuando `mode=off`. En producción sólo debe activarse si el proxy upstream
+    /// valida el cert cliente y no puede inyectar la extensión `PeerCertificate`.
+    pub mtls_header_trusted: bool,
     /// Vault PKI · rol que firma el leaf cert del gateway.
     pub pki_role: String,
     /// CN solicitado al emitir (`alt_names` ext SAN se derivan).
@@ -161,12 +165,14 @@ impl Config {
             "static" | "pem" => TlsMode::Static,
             _ => TlsMode::Off,
         };
+        let mtls_header_trusted = parse_bool("TRENCHPASS_MTLS_HEADER_TRUSTED").unwrap_or(false);
         let tls = TlsConfig {
             mode: tls_mode,
             cert: parse_env::<PathBuf>("TRENCHPASS_TLS_CERT").ok(),
             key: parse_env::<PathBuf>("TRENCHPASS_TLS_KEY").ok(),
             client_ca: parse_env::<PathBuf>("TRENCHPASS_TLS_CLIENT_CA").ok(),
             mtls_required: parse_bool("TRENCHPASS_MTLS_REQUIRED").unwrap_or(false),
+            mtls_header_trusted,
             pki_role: parse_env::<String>("TRENCHPASS_PKI_ROLE")
                 .unwrap_or_else(|_| "mcp-gateway".into()),
             pki_common_name: parse_env::<String>("TRENCHPASS_PKI_COMMON_NAME")
@@ -184,6 +190,12 @@ impl Config {
             pki_refresh_jitter_percent: parse_env::<u8>("TRENCHPASS_PKI_REFRESH_JITTER_PERCENT")
                 .unwrap_or(10),
         };
+        if env.is_production() && tls.mode == TlsMode::Off {
+            return Err(Error::Config(
+                "TRENCHPASS_TLS_MODE no puede ser 'off' en producción; usar 'static' o 'vault_pki'"
+                    .into(),
+            ));
+        }
         if tls.mode == TlsMode::VaultPki && tls.pki_refresh_percent < 10 {
             return Err(Error::Config(
                 "TRENCHPASS_PKI_REFRESH_PERCENT debe ser ≥ 10".into(),

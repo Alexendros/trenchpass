@@ -75,7 +75,7 @@ _Sin avisos de seguridad pendientes; ver `SECURITY.md` para la política de divu
   imagen final ~12 MB.
 - GitHub Actions: `fmt`, `clippy`, `test` (con servicio Postgres + schema vendorizado),
   `docker` (push GHCR en main).
-- `sql/init_audit.sql` vendorizado del schema Controlink (mismo `audit_events`).
+- `migrations/20260510120000_init_audit.sql` vendorizado del schema Controlink (mismo `audit_events`).
 - Documentación canon: `LICENSE` (AGPL-3.0 verbatim), `COPYRIGHT.md`,
   `CITATION.cff`, `ARCHITECTURE.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
   `SECURITY.md`, `ROADMAP.md`, `RELEASE.md`, `STYLEGUIDE.md`, `SUPPORT.md`,

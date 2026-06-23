@@ -74,7 +74,7 @@ proveedor con el secreto vivo que recupera de Vault.
 - `invalidate(path)` y `invalidate_all()` para forzar refresh tras rotación.
 
 ### 3.5 Audit (`src/audit/`)
-- Schema en `sql/init_audit.sql` (co-vendorizado con Controlink).
+- Schema en `migrations/20260510120000_init_audit.sql` (co-vendorizado con Controlink).
 - Append-only por privilegios Postgres: el rol `audit_writer` solo tiene `INSERT`.
 - Sin `RETURNING` (requeriría `SELECT`); el dashboard Controlink lee con `audit_reader`.
 

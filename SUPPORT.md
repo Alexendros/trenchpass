@@ -8,8 +8,8 @@ una issue.
 
 | Pregunta | Canal |
 |----------|-------|
-| Bug | [GitHub Issues · template `bug`](https://github.com/Alexendros/trenchpass/issues/new?template=bug.md) |
-| Feature request | [GitHub Issues · template `feature`](https://github.com/Alexendros/trenchpass/issues/new?template=feature.md) |
+| Bug | [GitHub Issues · template `bug`](https://github.com/Alexendros/trenchpass/issues/new?template=bug.yml) |
+| Feature request | [GitHub Issues · template `feature`](https://github.com/Alexendros/trenchpass/issues/new?template=feature.yml) |
 | Pregunta de uso | [GitHub Discussions](https://github.com/Alexendros/trenchpass/discussions) |
 | Pregunta de arquitectura | Lee `ARCHITECTURE.md` y `docs/adr/`. Si sigue sin estar claro, abre Discussion. |
 | Vulnerabilidad | **NO uses Issues** · `SECURITY.md` |

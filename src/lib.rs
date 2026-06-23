@@ -22,22 +22,29 @@ use std::sync::{Arc, OnceLock};
 /// ya estaba registrado, `install_default` devuelve `Err` y emitimos un
 /// `warn!` ruidoso — la garantía FIPS-friendly se pierde silenciosamente
 /// si no se vigila este log.
+///
+/// Devuelve `true` si `aws-lc-rs` es el provider activo tras esta llamada,
+/// `false` si otro provider ya estaba registrado. El binario trata esto como
+/// fatal en producción.
 /// DEBE invocarse antes de cualquier `ServerConfig::builder()` o
 /// constructor de `rustls`.
-pub fn init_crypto() {
-    static ONCE: OnceLock<()> = OnceLock::new();
-    ONCE.get_or_init(|| {
+pub fn init_crypto() -> bool {
+    static ONCE: OnceLock<bool> = OnceLock::new();
+    *ONCE.get_or_init(|| {
         if rustls::crypto::aws_lc_rs::default_provider()
             .install_default()
-            .is_err()
+            .is_ok()
         {
+            true
+        } else {
             tracing::warn!(
                 target: "trenchpass.crypto",
                 "aws-lc-rs no pudo instalarse como CryptoProvider default · otro provider \
                  (probablemente ring) ya estaba registrado · garantía FIPS-friendly perdida"
             );
+            false
         }
-    });
+    })
 }
 
 use crate::audit::AuditStore;

@@ -59,6 +59,7 @@ async fn main() -> Result<()> {
         key: None,
         client_ca: None,
         mtls_required: true,
+        mtls_header_trusted: false,
         pki_role: "mcp-gateway".into(),
         pki_common_name: "trenchpass.local".into(),
         pki_alt_names: vec![],
