@@ -1,0 +1,6 @@
+rules:
+  - id: no-unsafe-blocks
+    languages: [rust]
+    message: "Avoid unsafe blocks; document and review any required usage."
+    severity: WARNING
+    pattern: unsafe { ... }
