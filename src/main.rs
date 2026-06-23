@@ -3,7 +3,7 @@
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use axum_server::tls_rustls::RustlsAcceptor;
 use axum_server::Handle;
 use tokio::net::TcpListener;
@@ -28,7 +28,9 @@ async fn main() -> Result<()> {
 
     let config = Config::from_env().context("config inválida")?;
     otel::init(&config.otel, &config.server.log_level).context("otel init")?;
-    trenchpass::init_crypto();
+    if !trenchpass::init_crypto() && config.env.is_production() {
+        bail!("aws-lc-rs no pudo instalarse como CryptoProvider default; arranque en producción abortado");
+    }
 
     info!(
         target: "trenchpass.boot",

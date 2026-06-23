@@ -2,12 +2,10 @@ name: Release
 
 on:
   push:
-    tags: ['v*.*.*']
+    tags: ["v*.*.*"]
 
 permissions:
-  contents: write
-  packages: write
-  id-token: write   # cosign keyless
+  contents: read
 
 jobs:
   # ────────────────────────────────────────────────────────────────────
@@ -16,7 +14,7 @@ jobs:
   # ────────────────────────────────────────────────────────────────────
   gate:
     name: Validar SemVer
-    uses: Alexendros/plantillas/.github/workflows/_lib-gate-semver.yml@main
+    uses: Alexendros/plantillas/.github/workflows/_lib-gate-semver.yml@141bbcad469061f30eabe76262f0677dab2db8e3 # main
     with:
       ref: ${{ github.ref_name }}
       require-stable: false
@@ -24,22 +22,27 @@ jobs:
   build-and-publish:
     needs: gate
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: write
+      id-token: write # cosign keyless
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v4
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ghcr.io/alexendros/trenchpass
           tags: |
@@ -48,7 +51,7 @@ jobs:
             type=raw,value=latest,enable=${{ needs.gate.outputs.is-stable == 'true' }}
 
       - id: build
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -60,7 +63,7 @@ jobs:
           provenance: true
           sbom: true
 
-      - uses: sigstore/cosign-installer@v3
+      - uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3
       - name: Sign image (keyless)
         run: |
           for tag in ${{ steps.meta.outputs.tags }}; do
@@ -68,12 +71,18 @@ jobs:
           done
 
       - name: Generate THIRD_PARTY_NOTICES
+        env:
+          CARGO_ABOUT_VERSION: "0.9.0"
+          CARGO_ABOUT_SHA256: "7a1a1bfb3ae3b6feabe9e1d6147a6b34b85bd0339bfd8b0ec11b312dee10d99a"
         run: |
-          curl -fsSL https://github.com/EmbarkStudios/cargo-about/releases/latest/download/cargo-about-x86_64-unknown-linux-musl.tar.gz | tar xz
+          set -euo pipefail
+          curl -fsSL "https://github.com/EmbarkStudios/cargo-about/releases/download/${CARGO_ABOUT_VERSION}/cargo-about-${CARGO_ABOUT_VERSION}-x86_64-unknown-linux-musl.tar.gz" -o cargo-about.tar.gz
+          echo "${CARGO_ABOUT_SHA256}  cargo-about.tar.gz" | sha256sum -c -
+          tar xzf cargo-about.tar.gz
           ./cargo-about-*/cargo-about generate -c about.toml about.hbs > THIRD_PARTY_NOTICES.md || echo "(about config pending)" > THIRD_PARTY_NOTICES.md
 
       - name: GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3
         with:
           generate_release_notes: true
           prerelease: ${{ needs.gate.outputs.is-stable != 'true' }}
@@ -83,7 +92,7 @@ jobs:
 
       - name: Job summary
         if: always()
-        uses: Alexendros/plantillas/.github/actions/job-summary@main
+        uses: Alexendros/plantillas/.github/actions/job-summary@141bbcad469061f30eabe76262f0677dab2db8e3 # main
         with:
           title: "Release ${{ needs.gate.outputs.version }}"
           status: ${{ job.status }}

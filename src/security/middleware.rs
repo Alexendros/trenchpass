@@ -72,7 +72,12 @@ fn plan_auth(state: &AppState, req: &Request<Body>) -> Result<AuthPlan> {
     if !state.config.env.is_production() {
         if let Some(expected) = state.config.dev_bearer.as_deref() {
             let consumer = bearer::resolve_dev(token, Some(expected))?;
-            if let Some(cn) = mtls::extract_cn(req, state.config.tls.mtls_required)? {
+            if let Some(cn) = mtls::extract_cn(
+                req,
+                state.config.tls.mtls_required,
+                state.config.tls.mode,
+                state.config.tls.mtls_header_trusted,
+            )? {
                 mtls::assert_match(&cn, &consumer.id)?;
             }
             return Ok(AuthPlan::Resolved(consumer));
@@ -83,8 +88,13 @@ fn plan_auth(state: &AppState, req: &Request<Body>) -> Result<AuthPlan> {
     // token sólo se compara (constant-time) contra el `token_hash` custodiado en
     // Vault. El orden se invierte respecto a dev: CN primero (índice), bearer
     // después (prueba). mTLS es obligatorio en este path.
-    let cn = mtls::extract_cn(req, true)?
-        .ok_or(Error::Auth(crate::error::AuthError::MissingClientCert))?;
+    let cn = mtls::extract_cn(
+        req,
+        true,
+        state.config.tls.mode,
+        state.config.tls.mtls_header_trusted,
+    )?
+    .ok_or(Error::Auth(crate::error::AuthError::MissingClientCert))?;
     Ok(AuthPlan::NeedsVault {
         consumer_id: cn,
         token: token.to_string(),

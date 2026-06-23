@@ -20,6 +20,7 @@ use tracing::warn;
 use x509_parser::pem::Pem;
 use x509_parser::prelude::FromDer;
 
+use crate::config::TlsMode;
 use crate::error::{AuthError, Error, Result};
 use crate::transport::PeerCertificate;
 
@@ -30,21 +31,40 @@ const HDR_CLIENT_CERT: &str = "x-forwarded-tls-client-cert";
 ///
 /// - Si la conexión TLS llegó directamente al gateway (rustls verifier),
 ///   parsea desde la `PeerCertificate` extension.
-/// - Si no, intenta el header de Traefik.
+/// - Si no, intenta el header de Traefik, pero sólo si `tls_mode != Off` o
+///   `header_trusted == true` (evita aceptar un header falsificable en modo
+///   plain sin proxy validador).
 /// - Si ninguna fuente está disponible y `required=false`, devuelve `Ok(None)`.
 /// - Si `required=true` y ninguna fuente disponible, error.
-pub fn extract_cn(req: &Request<Body>, required: bool) -> Result<Option<String>> {
+pub fn extract_cn(
+    req: &Request<Body>,
+    required: bool,
+    tls_mode: TlsMode,
+    header_trusted: bool,
+) -> Result<Option<String>> {
     // 1) Direct path · cert inyectado por PeerCertAcceptor
     if let Some(cert) = req.extensions().get::<PeerCertificate>() {
         return parse_cn_from_der(&cert.0).map(Some);
     }
-    // 2) Traefik header path
-    extract_cn_from_headers(req.headers(), required)
+    // 2) Traefik header path (sólo si el contexto lo hace creíble)
+    extract_cn_from_headers(req.headers(), required, tls_mode, header_trusted)
 }
 
 /// Compatibilidad legacy · ruta header-only para llamadas que no tienen
 /// `Request` completo a mano. `auth_middleware` debe preferir [`extract_cn`].
-pub fn extract_cn_from_headers(headers: &HeaderMap, required: bool) -> Result<Option<String>> {
+pub fn extract_cn_from_headers(
+    headers: &HeaderMap,
+    required: bool,
+    tls_mode: TlsMode,
+    header_trusted: bool,
+) -> Result<Option<String>> {
+    // Rechazar header si TLS está off y no se ha declarado explícitamente de confianza.
+    if tls_mode == TlsMode::Off && !header_trusted {
+        if required {
+            return Err(Error::Auth(AuthError::MissingClientCert));
+        }
+        return Ok(None);
+    }
     let Some(raw) = headers.get(HDR_CLIENT_CERT) else {
         if required {
             return Err(Error::Auth(AuthError::MissingClientCert));
@@ -113,6 +133,7 @@ pub fn assert_match(cert_cn: &str, bearer_consumer: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::TlsMode;
     use std::sync::Arc;
 
     fn rcgen_leaf() -> (Vec<u8>, String) {
@@ -148,7 +169,9 @@ mod tests {
             .unwrap();
         req.extensions_mut().insert(pc);
 
-        let cn = extract_cn(&req, true).expect("cn").expect("some");
+        let cn = extract_cn(&req, true, TlsMode::Off, false)
+            .expect("cn")
+            .expect("some");
         assert_eq!(cn, expected);
     }
 
@@ -175,21 +198,36 @@ mod tests {
             .body(Body::empty())
             .unwrap();
 
-        let cn = extract_cn(&req, true).expect("cn").expect("some");
+        let cn = extract_cn(&req, true, TlsMode::Static, false)
+            .expect("cn")
+            .expect("some");
         assert_eq!(cn, "header-CN");
+    }
+
+    #[test]
+    fn extract_cn_rejects_header_in_off_mode_when_untrusted() {
+        let req = Request::builder()
+            .uri("/")
+            .header(HDR_CLIENT_CERT, "garbage-not-a-pem")
+            .body(Body::empty())
+            .unwrap();
+        let err = extract_cn(&req, true, TlsMode::Off, false).unwrap_err();
+        matches!(err, Error::Auth(AuthError::MissingClientCert));
     }
 
     #[test]
     fn extract_cn_missing_required_errors() {
         let req = Request::builder().uri("/").body(Body::empty()).unwrap();
-        let err = extract_cn(&req, true).unwrap_err();
+        let err = extract_cn(&req, true, TlsMode::Off, false).unwrap_err();
         matches!(err, Error::Auth(AuthError::MissingClientCert));
     }
 
     #[test]
     fn extract_cn_missing_optional_returns_none() {
         let req = Request::builder().uri("/").body(Body::empty()).unwrap();
-        assert!(extract_cn(&req, false).unwrap().is_none());
+        assert!(extract_cn(&req, false, TlsMode::Off, false)
+            .unwrap()
+            .is_none());
     }
 
     #[test]
