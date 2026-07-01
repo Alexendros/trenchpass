@@ -2,7 +2,7 @@
 name = "trenchpass"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.88"
+rust-version = "1.90"
 description = "TrenchPass · MCP gateway custodio único de credenciales (Vault + Proton Pass)"
 license = "AGPL-3.0-or-later"
 repository = "https://github.com/Alexendros/trenchpass"
