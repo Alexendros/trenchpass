@@ -131,7 +131,7 @@ it-vault = []
 
 [dev-dependencies]
 proptest = "1"
-axum-test = "20"
+axum-test = "21"
 wiremock = "0.6"
 # Self-signed CA + leaf en tests sin Vault.
 rcgen = "0.14"
